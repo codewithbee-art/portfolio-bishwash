@@ -1,0 +1,103 @@
+# How to Run Your Portfolio Website
+
+## Running Locally (No Server Required)
+Since this is a static HTML/CSS/JavaScript website, you can run it directly in your browser without any special setup.
+
+### Method 1: Open Directly in Browser
+1. Navigate to the project folder: `c:\Users\Ace\Documents\Bishwash portfolio website`
+2. Double-click the `index.html` file
+3. Your default browser will open the website
+
+### Method 2: Right-Click Menu
+1. Find `index.html` in your file explorer
+2. Right-click on it
+3. Select "Open with" → Choose your browser (Chrome, Firefox, Edge, etc.)
+
+### Method 3: VS Code Live Server (Recommended for Development)
+If you have VS Code installed:
+1. Open the project folder in VS Code
+2. Install the "Live Server" extension (if not already installed)
+3. Right-click on `index.html`
+4. Select "Open with Live Server"
+5. This will auto-refresh when you make changes
+
+### Method 4: Command Line (Python)
+If you have Python installed:
+1. Open terminal/command prompt
+2. Navigate to the project folder:
+   cd "c:\Users\Ace\Documents\Bishwash portfolio website"
+3. Run one of these commands:
+   - Python 3: `python -m http.server 8000`
+   - Python 2: `python -m SimpleHTTPServer 8000`
+4. Open browser and go to: `http://localhost:8000`
+
+### Method 5: Node.js (npx serve)
+If you have Node.js installed:
+1. Open terminal/command prompt
+2. Navigate to the project folder:
+   cd "c:\Users\Ace\Documents\Bishwash portfolio website"
+3. Run: `npx serve`
+4. Follow the URL shown in terminal (usually http://localhost:3000)
+
+## Project Structure
+```
+Bishwash portfolio website/
+├── index.html          # Main HTML file
+├── css/
+│   ├── styles.css      # Main styles
+│   └── animations.css  # Animation styles
+├── js/
+│   ├── main.js         # Main JavaScript
+│   ├── particles.js    # Particle animation
+│   └── animations.js   # Animation scripts
+└── assets/
+    └── profile.png     # Your profile photo
+```
+
+## Tips
+- The website uses Google Fonts and Lucide icons (loaded from CDN), so you need an internet connection for these to work
+- Make sure your `assets/profile.png` file exists for your photo to display
+- For the best development experience, use VS Code with Live Server extension
+- The website is fully responsive and works on mobile devices
+
+## Deploying Online
+To make your website accessible on the internet:
+1. **Netlify Drop**: Go to netlify.com, drag and drop your project folder
+2. **GitHub Pages**: Push to GitHub, enable GitHub Pages in settings
+3. **Vercel**: Install Vercel CLI, run `vercel` in project folder
+
+---
+Last Updated: Feb 15, 2026
+
+
+
+Note for Deployment
+
+Next Steps for Production
+Generate bcrypt password hash:
+
+Edited
+index.html+1-1
+Copy the output and set ADMIN_PASSWORD= in .env
+
+Generate secure session secret:
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+Update SESSION_SECRET in .env
+
+Install new dependencies:
+npm install
+
+
+Test thoroughly:
+
+Verify login still works
+Test file uploads
+Check contact form validation
+Ensure rate limiting responses work
+Environment variables for production:
+
+Set NODE_ENV=production
+Use strong ADMIN_PASSWORD (bcrypt hash)
+Set ALLOWED_ORIGIN to your domain URL
+Ensure HTTPS is enabled

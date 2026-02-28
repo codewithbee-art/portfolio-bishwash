@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Bishwash Acharya</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <style>
+        .admin-login-section {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-dark);
+            padding: 24px;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .login-logo {
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 212, 170, 0.1);
+            margin: 0 auto 24px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .login-form label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .login-form .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .login-form .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .login-form .btn {
+            width: 100%;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .back-link:hover {
+            color: var(--accent);
+        }
+
+        .forgot-password-link {
+            display: inline-block;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+        }
+
+        .forgot-password-link:hover {
+            color: var(--accent);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .reset-modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 24px;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .reset-form .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .reset-form label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .reset-form .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        .reset-form .form-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .reset-form .btn {
+            width: 100%;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .reset-info {
+            padding: 16px;
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .reset-code {
+            padding: 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: var(--accent);
+            margin: 16px 0;
+            text-align: center;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <section class="admin-login-section">
+        <div class="login-container">
+            <div class="login-logo">BA</div>
+            <h1 class="login-title">Admin Access</h1>
+            <p class="login-subtitle">Authorized Personnel Only</p>
+            
+            <form class="login-form" id="login-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" class="form-input" placeholder="Enter username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span>Login</span>
+                </button>
+                <button type="button" class="forgot-password-link" onclick="openForgotPasswordModal()">
+                    Forgot Password?
+                </button>
+            </form>
+            
+            <a href="../index.html" class="back-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                Back to Portfolio
+            </a>
+        </div>
+    </section>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal-overlay" id="forgot-password-modal">
+        <div class="reset-modal">
+            <button class="modal-close" onclick="closeForgotPasswordModal()">×</button>
+            <h2 style="margin-bottom: 8px;">Reset Password</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px;">Enter your username to receive a password reset code</p>
+            
+            <div class="reset-form">
+                <div class="form-group">
+                    <label for="reset-username">Username</label>
+                    <input type="text" id="reset-username" class="form-input" placeholder="Enter your username" required>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="requestPasswordReset()">Request Reset Code</button>
+            </div>
+            
+            <div id="reset-code-section" style="display: none; margin-top: 24px;">
+                <div class="reset-info" id="reset-info-msg">
+                    ✉️ Reset code sent to your email. Check your inbox and enter it below.
+                </div>
+                <div class="reset-form">
+                    <div class="form-group">
+                        <label for="reset-code-input">Reset Code</label>
+                        <input type="text" id="reset-code-input" class="form-input" placeholder="Enter reset code from email" required style="text-transform: uppercase; letter-spacing: 2px; text-align: center;">
+                    </div>
+                    <div class="form-group">
+                        <label for="reset-new-password">New Password</label>
+                        <input type="password" id="reset-new-password" class="form-input" placeholder="Enter new password" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="submitPasswordReset()">Reset Password</button>
+                </div>
+                <p style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-top: 12px;">
+                    Code expires in 15 minutes
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Forgot password modal functions
+        function openForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.add('active');
+            document.getElementById('reset-username').value = '';
+            document.getElementById('reset-code-section').style.display = 'none';
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').classList.remove('active');
+        }
+
+        // Request password reset code
+        async function requestPasswordReset() {
+            const username = document.getElementById('reset-username').value;
+            
+            if (!username) {
+                alert('Please enter your username');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/auth/request-password-reset', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    const masked = data.maskedEmail || 'your email';
+                    document.getElementById('reset-info-msg').innerHTML = 
+                        `✉️ Reset code sent to <strong>${masked}</strong>. Check your inbox and enter it below.`;
+                    document.getElementById('reset-code-section').style.display = 'block';
+                    
+                    // Auto-close after 15 minutes
+                    setTimeout(() => {
+                        if (document.getElementById('forgot-password-modal').classList.contains('active')) {
+                            closeForgotPasswordModal();
+                            alert('Reset code expired. Please request a new one.');
+                        }
+                    }, 15 * 60 * 1000);
+                } else {
+                    alert(data.error || 'Error requesting password reset');
+                }
+            } catch (err) {
+                alert('Error connecting to server');
+            }
+        }
+
+        // Submit password reset with code + new password
+        async function submitPasswordReset() {
+            const resetCode = document.getElementById('reset-code-input').value.trim().toUpperCase();
+            const newPassword = document.getElementById('reset-new-password').value;
+            
+            if (!resetCode || !newPassword) {
+                alert('Please enter both the reset code and a new password');
+                return;
+            }
+            if (newPassword.length < 6) {
+                alert('Password must be at least 6 characters');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ resetCode, newPassword })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    alert('Password reset successfully! You can now login with your new password.');
+                    closeForgotPasswordModal();
+                } else {
+                    alert(data.error || 'Failed to reset password');
+                }
+            } catch (err) {
+                alert('Error connecting to server');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('forgot-password-modal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'forgot-password-modal') {
+                closeForgotPasswordModal();
+            }
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    alert(data.error || 'Login failed');
+                }
+            } catch (err) {
+                alert('Error connecting to server');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <title>Blog | Bishwash Acharya</title>
+    <meta name="description" content="Read Bishwash Acharya's insights on web development, data analytics, quality assurance, and career growth in technology.">
+    
+    <!-- Open Graph (dynamically updated by JS) -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Blog | Bishwash Acharya" id="og-title">
+    <meta property="og:description" content="Read Bishwash Acharya's insights on web development, data analytics, and career growth in technology." id="og-description">
+    <meta property="og:url" content="" id="og-url">
+    <meta property="og:image" content="/assets/profile.png" id="og-image">
+    
+    <!-- Twitter Card (dynamically updated by JS) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Blog | Bishwash Acharya" id="tw-title">
+    <meta name="twitter:description" content="Read Bishwash Acharya's insights on web development, data analytics, and career growth in technology." id="tw-description">
+    <meta name="twitter:image" content="/assets/profile.png" id="tw-image">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Markdown rendering + XSS sanitization -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    
+    <style>
+        .blog-detail-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 24px 60px;
+        }
+        
+        .blog-detail-header {
+            margin-bottom: 40px;
+        }
+        
+        .blog-detail-title {
+            font-size: 40px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+        
+        .blog-detail-meta {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .blog-detail-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .blog-detail-image {
+            width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            background: var(--bg-card);
+        }
+        
+        .blog-detail-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .blog-detail-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .blog-detail-tag {
+            background: rgba(0, 212, 170, 0.1);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .blog-detail-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+        
+        .blog-detail-content h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin: 32px 0 16px;
+            color: var(--text-primary);
+        }
+        
+        .blog-detail-content h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin: 28px 0 12px;
+            color: var(--text-primary);
+        }
+        
+        .blog-detail-content p {
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+        
+        .blog-detail-content ul,
+        .blog-detail-content ol {
+            margin: 16px 0 16px 24px;
+            color: var(--text-secondary);
+        }
+        
+        .blog-detail-content li {
+            margin-bottom: 8px;
+        }
+        
+        .blog-detail-content code {
+            background: var(--bg-card);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--accent);
+        }
+        
+        .blog-detail-content pre {
+            background: var(--bg-card);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        
+        .blog-detail-footer {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 16px;
+        }
+        
+        .blog-detail-footer-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .blog-detail-footer-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        .blog-loading,
+        .blog-error {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-secondary);
+        }
+        
+        /* Related Posts */
+        .related-posts {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        .related-posts h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .related-posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .related-post-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .related-post-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 212, 170, 0.1);
+        }
+
+        .related-post-image {
+            height: 140px;
+            background: var(--bg-dark);
+            overflow: hidden;
+        }
+
+        .related-post-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .related-post-content {
+            padding: 16px;
+        }
+
+        .related-post-content h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        .related-post-content .post-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .blog-detail-container {
+                padding: 100px 16px 40px;
+            }
+            
+            .blog-detail-title {
+                font-size: 28px;
+            }
+            
+            .blog-detail-meta {
+                gap: 16px;
+            }
+
+            .related-posts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/" class="logo-link"><span class="logo-circle">BA</span></a>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#about" class="nav-link">About</a>
+                <a href="/#experience" class="nav-link">Experience</a>
+                <a href="/#projects" class="nav-link">Projects</a>
+                <a href="/blogs" class="nav-link active">Blog</a>
+                <a href="/#contact" class="nav-link">Contact</a>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                    <i data-lucide="sun" class="theme-icon sun"></i>
+                    <i data-lucide="moon" class="theme-icon moon"></i>
+                </button>
+                <a href="admin/login.html" class="admin-link" aria-label="Admin Login">
+                    <i data-lucide="lock" class="admin-icon"></i>
+                </a>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="/">Home</a>
+        <span class="separator">›</span>
+        <a href="/blogs">Blog</a>
+        <span class="separator">›</span>
+        <span class="current" id="breadcrumb-title">Post</span>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="blog-detail-container">
+            <div id="blog-content">
+                <div class="blog-loading">Loading blog post...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>Designed & Built by Bishwash Acharya</p>
+                    <span class="footer-year">2025</span>
+                    <span class="footer-heart">❤️</span>
+                </div>
+                <div class="footer-right">
+                    <div class="currently-listening">
+                        <svg class="spotify-logo" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                        <span class="listening-label">Currently listening to:</span>
+                        <span class="listening-track">Lo-fi beats</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+    <script>
+        // Get blog ID from URL path
+        function getBlogIdFromPath() {
+            const pathParts = window.location.pathname.split('/');
+            return pathParts[pathParts.length - 1];
+        }
+        
+        // Safely create text node with potential newlines
+        function createParagraphFromText(text) {
+            const p = document.createElement('p');
+            p.textContent = text;
+            return p;
+        }
+        
+        // Load and render blog post
+        async function loadBlogPost() {
+            const blogId = getBlogIdFromPath();
+            const container = document.getElementById('blog-content');
+            
+            if (!blogId || !container) {
+                return showError('Blog post not found.');
+            }
+            
+            try {
+                const res = await fetch(`/api/content/blog/${blogId}`);
+                
+                if (!res.ok) {
+                    document.getElementById('blog-content').innerHTML = '<div class="blog-error"><p>Blog post not found.</p></div>';
+                    return;
+                }
+                
+                const post = await res.json();
+                
+                // Update page title and meta
+                document.title = `${post.title} - Bishwash Acharya`;
+                document.querySelector('meta[name="description"]').setAttribute('content', post.excerpt || post.content?.substring(0, 160) || '');
+                document.getElementById('og-title').setAttribute('content', `${post.title} - Bishwash Acharya`);
+                document.getElementById('og-description').setAttribute('content', post.excerpt || post.content?.substring(0, 160) || '');
+                document.getElementById('og-url').setAttribute('content', window.location.href);
+                if (post.image_url) document.getElementById('og-image').setAttribute('content', post.image_url);
+                document.getElementById('tw-title').setAttribute('content', `${post.title} - Bishwash Acharya`);
+                document.getElementById('tw-description').setAttribute('content', post.excerpt || post.content?.substring(0, 160) || '');
+                if (post.image_url) document.getElementById('tw-image').setAttribute('content', post.image_url);
+                const breadcrumbTitle = document.getElementById('breadcrumb-title');
+                if (breadcrumbTitle) breadcrumbTitle.textContent = post.title;
+                
+                const readTime = post.read_time || 5;
+                const publishDate = new Date(post.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                const header = document.createElement('div');
+                header.className = 'blog-detail-header';
+                
+                const title = document.createElement('h1');
+                title.className = 'blog-detail-title';
+                title.textContent = post.title;
+                header.appendChild(title);
+                
+                const meta = document.createElement('div');
+                meta.className = 'blog-detail-meta';
+                
+                const dateItem = document.createElement('div');
+                dateItem.className = 'blog-detail-meta-item';
+                const dateIcon = document.createElement('i');
+                dateIcon.setAttribute('data-lucide', 'calendar');
+                dateIcon.setAttribute('width', '16');
+                dateIcon.setAttribute('height', '16');
+                dateItem.appendChild(dateIcon);
+                const dateSpan = document.createElement('span');
+                dateSpan.textContent = publishDate;
+                dateItem.appendChild(dateSpan);
+                meta.appendChild(dateItem);
+                
+                const timeItem = document.createElement('div');
+                timeItem.className = 'blog-detail-meta-item';
+                const timeIcon = document.createElement('i');
+                timeIcon.setAttribute('data-lucide', 'clock');
+                timeIcon.setAttribute('width', '16');
+                timeIcon.setAttribute('height', '16');
+                timeItem.appendChild(timeIcon);
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = readTime + ' min read';
+                timeItem.appendChild(timeSpan);
+                meta.appendChild(timeItem);
+                header.appendChild(meta);
+                
+                // Add tags
+                if (post.tags && post.tags.length > 0) {
+                    const tagsDiv = document.createElement('div');
+                    tagsDiv.className = 'blog-detail-tags';
+                    post.tags.forEach(tag => {
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = 'blog-detail-tag';
+                        tagSpan.textContent = tag;
+                        tagsDiv.appendChild(tagSpan);
+                    });
+                    header.appendChild(tagsDiv);
+                }
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'blog-detail-content';
+                
+                // Render markdown safely with marked + DOMPurify
+                if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+                    marked.setOptions({ breaks: true, gfm: true });
+                    contentDiv.innerHTML = DOMPurify.sanitize(marked.parse(post.content));
+                } else {
+                    // Fallback: plain text with basic line breaks
+                    const p = document.createElement('p');
+                    p.textContent = post.content;
+                    contentDiv.appendChild(p);
+                }
+                
+                const footer = document.createElement('div');
+                footer.className = 'blog-detail-footer';
+                const footerBtn = document.createElement('a');
+                footerBtn.href = '/blogs';
+                footerBtn.className = 'blog-detail-footer-btn';
+                const footerIcon = document.createElement('i');
+                footerIcon.setAttribute('data-lucide', 'arrow-left');
+                footerIcon.setAttribute('width', '16');
+                footerIcon.setAttribute('height', '16');
+                footerBtn.appendChild(footerIcon);
+                const footerText = document.createTextNode('Back to posts');
+                footerBtn.appendChild(footerText);
+                footer.appendChild(footerBtn);
+                
+                const container = document.getElementById('blog-content');
+                container.innerHTML = '';
+                container.appendChild(header);
+                
+                if (post.image_url) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'blog-detail-image';
+                    const img = document.createElement('img');
+                    img.src = post.image_url;
+                    img.alt = post.title;
+                    img.onerror = () => { img.src = '/assets/blog/placeholder.jpg'; };
+                    imgDiv.appendChild(img);
+                    container.appendChild(imgDiv);
+                }
+                
+                container.appendChild(contentDiv);
+                container.appendChild(footer);
+                
+                lucide.createIcons();
+
+                // Load related posts
+                loadRelatedPosts(post);
+                
+            } catch (err) {
+                console.error('Error loading blog post:', err);
+                document.getElementById('blog-content').innerHTML = '<div class="blog-error"><p>Error loading blog post. Please try again later.</p></div>';
+            }
+        }
+
+        // Load related posts based on shared tags
+        async function loadRelatedPosts(currentPost) {
+            try {
+                const res = await fetch('/api/content/blog');
+                const allPosts = await res.json();
+
+                const publishedPosts = allPosts.filter(p => 
+                    p.published && !p.hidden && p.id !== currentPost.id
+                );
+
+                const currentTags = currentPost.tags || [];
+                if (currentTags.length === 0 || publishedPosts.length === 0) return;
+
+                // Score posts by number of shared tags
+                const scored = publishedPosts.map(post => {
+                    const postTags = post.tags || [];
+                    const sharedCount = currentTags.filter(t => postTags.includes(t)).length;
+                    return { post, sharedCount };
+                }).filter(s => s.sharedCount > 0)
+                  .sort((a, b) => b.sharedCount - a.sharedCount)
+                  .slice(0, 3);
+
+                if (scored.length === 0) return;
+
+                // Build related posts section
+                const section = document.createElement('div');
+                section.className = 'related-posts';
+
+                const heading = document.createElement('h2');
+                heading.textContent = 'Related Posts';
+                section.appendChild(heading);
+
+                const grid = document.createElement('div');
+                grid.className = 'related-posts-grid';
+
+                scored.forEach(({ post }) => {
+                    const card = document.createElement('div');
+                    card.className = 'related-post-card';
+                    card.onclick = () => window.location.href = `/blog/${post.id}`;
+
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'related-post-image';
+                    if (post.image_url) {
+                        const img = document.createElement('img');
+                        img.src = post.image_url;
+                        img.alt = post.title;
+                        img.onerror = function() { this.src = '/assets/blog/placeholder.jpg'; };
+                        imgDiv.appendChild(img);
+                    }
+                    card.appendChild(imgDiv);
+
+                    const content = document.createElement('div');
+                    content.className = 'related-post-content';
+
+                    const title = document.createElement('h4');
+                    title.textContent = post.title;
+                    content.appendChild(title);
+
+                    const meta = document.createElement('div');
+                    meta.className = 'post-meta';
+                    const dateSpan = document.createElement('span');
+                    dateSpan.textContent = new Date(post.created_at).toLocaleDateString();
+                    meta.appendChild(dateSpan);
+                    const readSpan = document.createElement('span');
+                    readSpan.textContent = (post.read_time || 5) + ' min read';
+                    meta.appendChild(readSpan);
+                    content.appendChild(meta);
+
+                    card.appendChild(content);
+                    grid.appendChild(card);
+                });
+
+                section.appendChild(grid);
+                document.getElementById('blog-content').appendChild(section);
+
+            } catch (err) {
+                console.error('Error loading related posts:', err);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            const app = new PortfolioApp();
+            loadBlogPost();
+        });
+    </script>
+</body>
+</html>

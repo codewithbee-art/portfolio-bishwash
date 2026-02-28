@@ -1,0 +1,5 @@
+
+Everything is going nice so far. Let's reflect current status and make new changes.
+- Contact section is working fine. messages are coming both ways. in my admin and my email. (Check the integration of the EMAIL Mail Trasfer Protocol, we we are vernable to expose with security. make sure all messages stores in database and make a button in admin inside message to download all messages in excel file format. )
+
+Fix this

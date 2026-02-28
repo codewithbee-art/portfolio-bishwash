@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <title>Blog | Tech Insights by Bishwash Acharya</title>
+    <meta name="description" content="Read Bishwash Acharya's blog on web development, data analytics, quality assurance, and career growth in technology. Practical insights and tutorials.">
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Blog | Tech Insights by Bishwash Acharya">
+    <meta property="og:description" content="Read Bishwash Acharya's blog on web development, data analytics, quality assurance, and career growth in technology.">
+    <meta property="og:url" content="/blogs">
+    <meta property="og:image" content="/assets/profile.png">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Blog | Tech Insights by Bishwash Acharya">
+    <meta name="twitter:description" content="Read Bishwash Acharya's blog on web development, data analytics, quality assurance, and career growth in technology.">
+    <meta name="twitter:image" content="/assets/profile.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        .blog-list-container {
+            max-width: 900px;
+            margin: 20px auto 100px;
+            padding: 0 24px;
+        }
+        
+        .blog-list-header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+        
+        .blog-list-header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--text-primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .blog-list-header p {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        /* Controls: search, filters, sort */
+        .blog-controls {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+
+        .blog-search-container {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .blog-search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            color: var(--text-secondary);
+        }
+
+        #blog-search-input {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        #blog-search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .blog-sort-container select {
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .blog-filter-container {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .blog-filter-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .blog-filter-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .blog-filter-btn.active {
+            background: var(--accent);
+            color: var(--bg-dark);
+            border-color: var(--accent);
+        }
+
+        .blog-stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .blog-stats .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .blog-stats .stat-item span:first-child {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        .blog-list {
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        
+        .blog-list-item {
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+        
+        .blog-list-item:hover {
+            border-color: var(--accent);
+            transform: translateX(8px);
+            box-shadow: 0 8px 24px rgba(0, 212, 170, 0.1);
+        }
+        
+        .blog-list-item-image {
+            width: 200px;
+            height: 150px;
+            flex-shrink: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--bg-dark);
+        }
+        
+        .blog-list-item-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .blog-list-item-content {
+            flex: 1;
+        }
+        
+        .blog-list-item-content h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        
+        .blog-list-item-excerpt {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+        
+        .blog-list-item-meta {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .blog-list-item-tag {
+            background: rgba(0, 212, 170, 0.1);
+            color: var(--accent);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .blog-featured-badge {
+            display: inline-block;
+            background: var(--accent);
+            color: var(--bg-dark);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .blog-list-empty {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-secondary);
+        }
+        
+        .blog-list-empty i {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .blog-no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .blog-no-results h3 {
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        /* Floating Back to Website Button */
+        .back-to-site-btn {
+            position: fixed;
+            bottom: 32px;
+            left: 32px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 40px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 999;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .back-to-site-btn.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .back-to-site-btn:hover {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: var(--bg-dark);
+            box-shadow: 0 8px 32px rgba(0, 212, 170, 0.25);
+            transform: translateY(-2px);
+        }
+
+        .back-to-site-btn svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.3s ease;
+        }
+
+        .back-to-site-btn:hover svg {
+            transform: translateX(-3px);
+        }
+
+        @media (max-width: 768px) {
+            .back-to-site-btn {
+                bottom: 20px;
+                left: 20px;
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .blog-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .blog-search-container {
+                max-width: none;
+            }
+
+            .blog-filter-container {
+                gap: 8px;
+            }
+
+            .blog-filter-btn {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+
+            .blog-list-item {
+                flex-direction: column;
+            }
+            
+            .blog-list-item-image {
+                width: 100%;
+                height: 200px;
+            }
+            
+            .blog-list-header h1 {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/" class="logo-link"><span class="logo-circle">BA</span></a>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#about" class="nav-link">About</a>
+                <a href="/#experience" class="nav-link">Experience</a>
+                <a href="/#projects" class="nav-link">Projects</a>
+                <a href="/blogs" class="nav-link active">Blog</a>
+                <a href="/#contact" class="nav-link">Contact</a>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                    <i data-lucide="sun" class="theme-icon sun"></i>
+                    <i data-lucide="moon" class="theme-icon moon"></i>
+                </button>
+                <a href="admin/login.html" class="admin-link" aria-label="Admin Login">
+                    <i data-lucide="lock" class="admin-icon"></i>
+                </a>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="/">Home</a>
+        <span class="separator">›</span>
+        <a href="/#blog">Blog</a>
+        <span class="separator">›</span>
+        <span class="current">All Blog Posts</span>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="blog-list-container">
+            <div class="blog-list-header">
+                <h1>All Blog Posts</h1>
+                <p>Explore my thoughts, insights, and technical articles</p>
+            </div>
+
+            <!-- Controls -->
+            <div class="blog-controls">
+                <div class="blog-search-container">
+                    <i data-lucide="search" class="blog-search-icon"></i>
+                    <input type="text" id="blog-search-input" placeholder="Search blog posts...">
+                </div>
+                <div class="blog-sort-container">
+                    <select id="blog-sort-select" onchange="sortBlogs(this.value)">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                        <option value="featured">Featured First</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Dynamic Filter Buttons -->
+            <div class="blog-filter-container" id="blog-filter-container">
+                <button class="blog-filter-btn active" onclick="filterBlogs('all')">All</button>
+                <!-- Category buttons loaded dynamically -->
+            </div>
+
+            <!-- Stats -->
+            <div class="blog-stats" id="blog-stats"></div>
+            
+            <div class="blog-list" id="blog-list">
+                <!-- Blogs will be loaded here -->
+            </div>
+
+            <!-- No Results -->
+            <div class="blog-no-results" id="blog-no-results" style="display: none;">
+                <h3>No posts found</h3>
+                <p>Try adjusting your filters or search terms</p>
+                <button class="btn btn-primary" onclick="resetBlogFilters()" style="margin-top: 16px;">Reset Filters</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Back to Website Button -->
+    <a href="/" class="back-to-site-btn" id="back-to-site-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+        Back to Website
+    </a>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>Designed & Built by Bishwash Acharya</p>
+                    <span class="footer-year">2025</span>
+                    <span class="footer-heart">❤️</span>
+                </div>
+                <div class="footer-right">
+                    <div class="currently-listening">
+                        <svg class="spotify-logo" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                        <span class="listening-label">Currently listening to:</span>
+                        <span class="listening-track">Lo-fi beats</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        let allBlogPosts = [];
+        let currentFilter = 'all';
+        let currentSort = 'newest';
+        let currentSearch = '';
+
+        // Show skeleton loaders
+        function showBlogSkeletons() {
+            const list = document.getElementById('blog-list');
+            if (!list) return;
+            const item = `<div class="skeleton-blog-item">
+                <div class="skeleton-blog-image"></div>
+                <div class="skeleton-blog-content">
+                    <div class="skeleton-text title"></div>
+                    <div class="skeleton-text wide"></div>
+                    <div class="skeleton-text medium"></div>
+                    <div class="skeleton-text narrow"></div>
+                </div>
+            </div>`;
+            list.innerHTML = item.repeat(4);
+        }
+
+        // Load all blog posts
+        async function loadAllBlogs() {
+            showBlogSkeletons();
+            try {
+                const res = await fetch('/api/content/blog');
+                const posts = await res.json();
+                
+                allBlogPosts = posts.filter(p => p.published && !p.hidden);
+                
+                // Build dynamic filter buttons from tags
+                buildFilterButtons();
+                
+                // Render
+                applyFilters();
+            } catch (err) {
+                console.error('Error loading blogs:', err);
+                document.getElementById('blog-list').innerHTML = '<p>Error loading blog posts.</p>';
+            }
+        }
+
+        // Build filter buttons dynamically from post tags
+        function buildFilterButtons() {
+            const container = document.getElementById('blog-filter-container');
+            const tagCounts = {};
+            
+            allBlogPosts.forEach(post => {
+                (post.tags || []).forEach(tag => {
+                    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                });
+            });
+
+            // Sort by count descending
+            const sortedTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1]);
+
+            // Keep the "All" button, add category buttons
+            container.innerHTML = '<button class="blog-filter-btn active" onclick="filterBlogs(\'all\')">All</button>';
+            sortedTags.forEach(([tag, count]) => {
+                const btn = document.createElement('button');
+                btn.className = 'blog-filter-btn';
+                btn.textContent = `${tag} (${count})`;
+                btn.onclick = () => filterBlogs(tag);
+                container.appendChild(btn);
+            });
+        }
+
+        // Filter by category
+        function filterBlogs(category) {
+            currentFilter = category;
+
+            // Update active button
+            document.querySelectorAll('.blog-filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if ((category === 'all' && btn.textContent === 'All') ||
+                    btn.textContent.startsWith(category + ' (')) {
+                    btn.classList.add('active');
+                }
+            });
+
+            applyFilters();
+        }
+
+        // Sort posts
+        function sortBlogs(sortBy) {
+            currentSort = sortBy;
+            applyFilters();
+        }
+
+        // Apply all filters + sort + search
+        function applyFilters() {
+            let filtered = [...allBlogPosts];
+
+            // Category filter
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(p =>
+                    p.tags && Array.isArray(p.tags) && p.tags.includes(currentFilter)
+                );
+            }
+
+            // Search filter
+            if (currentSearch.trim()) {
+                const q = currentSearch.toLowerCase();
+                filtered = filtered.filter(p => {
+                    const title = (p.title || '').toLowerCase();
+                    const excerpt = (p.excerpt || '').toLowerCase();
+                    const tags = (p.tags || []).join(' ').toLowerCase();
+                    return title.includes(q) || excerpt.includes(q) || tags.includes(q);
+                });
+            }
+
+            // Sort
+            switch (currentSort) {
+                case 'oldest':
+                    filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                    break;
+                case 'featured':
+                    filtered.sort((a, b) => (b.featured || 0) - (a.featured || 0) || new Date(b.created_at) - new Date(a.created_at));
+                    break;
+                default: // newest
+                    filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
+
+            renderBlogList(filtered);
+        }
+
+        // Render the blog list
+        function renderBlogList(posts) {
+            const blogList = document.getElementById('blog-list');
+            const noResults = document.getElementById('blog-no-results');
+            const statsEl = document.getElementById('blog-stats');
+
+            // Stats
+            statsEl.innerHTML = `
+                <div class="stat-item"><span>${posts.length}</span> post${posts.length !== 1 ? 's' : ''} found</div>
+            `;
+
+            if (posts.length === 0) {
+                blogList.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            blogList.style.display = 'flex';
+            noResults.style.display = 'none';
+            blogList.innerHTML = '';
+
+            posts.forEach(post => {
+                const item = document.createElement('div');
+                item.className = 'blog-list-item' + (post.featured ? ' featured' : '');
+                item.onclick = () => window.location.href = `/blog/${post.id}`;
+
+                const imageHtml = post.image_url
+                    ? `<div class="blog-list-item-image"><img src="${post.image_url}" alt="${post.title}" loading="lazy" onerror="this.src='assets/blog/placeholder.jpg'"></div>`
+                    : '<div class="blog-list-item-image" style="background: var(--bg-dark);"></div>';
+
+                const featuredBadge = post.featured ? '<span class="blog-featured-badge">Featured</span>' : '';
+                const tagsHtml = (post.tags || []).map(t => `<span class="blog-list-item-tag">${t}</span>`).join('');
+
+                item.innerHTML = `
+                    ${imageHtml}
+                    <div class="blog-list-item-content">
+                        <div style="margin-bottom: 8px;">${featuredBadge}</div>
+                        <h3>${post.title}</h3>
+                        <p class="blog-list-item-excerpt">${post.excerpt || post.content?.substring(0, 200) + '...' || 'No excerpt available'}</p>
+                        <div class="blog-list-item-meta">
+                            <span>${new Date(post.created_at).toLocaleDateString()}</span>
+                            <span>${(post.read_time || 5)} min read</span>
+                            ${tagsHtml}
+                        </div>
+                    </div>
+                `;
+
+                blogList.appendChild(item);
+            });
+        }
+
+        // Reset all filters
+        function resetBlogFilters() {
+            document.getElementById('blog-search-input').value = '';
+            document.getElementById('blog-sort-select').value = 'newest';
+            currentSearch = '';
+            currentSort = 'newest';
+            filterBlogs('all');
+        }
+
+        // Floating back-to-site button logic
+        function initBackToSiteBtn() {
+            const btn = document.getElementById('back-to-site-btn');
+            if (!btn) return;
+            window.addEventListener('scroll', () => {
+                const scrollPercent = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
+                if (scrollPercent >= 0.25) {
+                    btn.classList.add('visible');
+                } else {
+                    btn.classList.remove('visible');
+                }
+            }, { passive: true });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            const app = new PortfolioApp();
+            loadAllBlogs();
+            initBackToSiteBtn();
+
+            // Real-time search
+            const searchInput = document.getElementById('blog-search-input');
+            searchInput.addEventListener('input', (e) => {
+                currentSearch = e.target.value;
+                applyFilters();
+            });
+        });
+    </script>
+</body>
+</html>

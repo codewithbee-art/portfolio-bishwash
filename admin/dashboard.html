@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Portfolio CMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-dark: #0f0f0f;
+            --bg-card: #1a1a1a;
+            --bg-hover: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #00d4aa;
+            --accent-hover: #00b894;
+            --danger: #ff4757;
+            --danger-hover: #ee3742;
+            --border: #2a2a2a;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+        
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .sidebar-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header p {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        .nav-menu {
+            padding: 16px 0;
+            flex: 1;
+        }
+        
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover, .nav-item.active {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        .nav-item i {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .nav-badge {
+            background: var(--accent);
+            color: var(--bg-dark);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+        }
+        
+        .sidebar-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .logout-btn:hover {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 24px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .header h2 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-hover);
+        }
+        
+        .btn-icon {
+            padding: 8px;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .stat-card h3 {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card p {
+            font-size: 32px;
+            font-weight: 700;
+        }
+        
+        /* Content Table */
+        .content-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .content-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            text-align: left;
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+        
+        td {
+            font-size: 14px;
+        }
+        
+        tr:hover {
+            background: var(--bg-hover);
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .badge-work {
+            background: rgba(0, 212, 170, 0.15);
+            color: var(--accent);
+        }
+        
+        .badge-education {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+        
+        .badge-hidden {
+            background: rgba(255, 71, 87, 0.15);
+            color: var(--danger);
+        }
+        
+        .badge-visible {
+            background: rgba(0, 212, 170, 0.15);
+            color: var(--accent);
+        }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-icon-only {
+            padding: 6px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+        
+        .btn-icon-only:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .modal-body {
+            padding: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 24px;
+        }
+        
+        .empty-state i {
+            width: 48px;
+            height: 48px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        
+        .empty-state h4 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+        
+        .empty-state p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1001;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast.success {
+            border-color: var(--accent);
+        }
+        
+        .toast.error {
+            border-color: var(--danger);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                height: auto;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .admin-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><i data-lucide="layout-dashboard"></i> Portfolio CMS</h1>
+                <p>Manage your website content</p>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                    <i data-lucide="home"></i>
+                    Dashboard
+                </a>
+                <a href="#experience" class="nav-item" data-section="experience">
+                    <i data-lucide="briefcase"></i>
+                    Experience
+                </a>
+                <a href="#education" class="nav-item" data-section="education">
+                    <i data-lucide="graduation-cap"></i>
+                    Education
+                </a>
+                <a href="#projects" class="nav-item" data-section="projects">
+                    <i data-lucide="folder"></i>
+                    Projects
+                </a>
+                <a href="#blog" class="nav-item" data-section="blog">
+                    <i data-lucide="file-text"></i>
+                    Blog
+                </a>
+                <a href="#skills" class="nav-item" data-section="skills">
+                    <i data-lucide="code"></i>
+                    Skills
+                </a>
+                <a href="#about" class="nav-item" data-section="about">
+                    <i data-lucide="user-round"></i>
+                    About
+                </a>
+                <a href="#hero" class="nav-item" data-section="hero">
+                    <i data-lucide="sparkles"></i>
+                    Hero
+                </a>
+                <a href="#settings" class="nav-item" data-section="settings">
+                    <i data-lucide="settings"></i>
+                    Settings
+                </a>
+                <a href="#messages" class="nav-item" data-section="messages">
+                    <i data-lucide="mail"></i>
+                    Messages
+                    <span class="nav-badge" id="msg-count">0</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <i data-lucide="log-out"></i>
+                    Logout
+                </button>
+            </div>
+        </aside>
+        
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <h2 id="page-title">Dashboard</h2>
+                <div class="header-actions" id="header-actions">
+                    <button class="btn btn-primary" onclick="openModal()">
+                        <i data-lucide="plus"></i>
+                        Add New
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Dashboard Stats -->
+            <div id="dashboard-view">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Experience</h3>
+                        <p id="stat-experience">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Education</h3>
+                        <p id="stat-education">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Projects</h3>
+                        <p id="stat-projects">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Messages</h3>
+                        <p id="stat-messages">0</p>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Content Table -->
+            <div class="content-card">
+                <div class="content-header">
+                    <h3 id="content-title">All Items</h3>
+                </div>
+                <div class="table-container">
+                    <table id="content-table">
+                        <thead id="table-head">
+                            <tr>
+                                <th>Title</th>
+                                <th>Details</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <i data-lucide="inbox"></i>
+                    <h4>No items yet</h4>
+                    <p>Click "Add New" to create your first item</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modal-title">Add New Item</h3>
+                <button class="modal-close" onclick="closeModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Dynamic form -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveItem()">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Message View Modal -->
+    <div class="modal-overlay" id="message-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>View Message</h3>
+                <button class="modal-close" onclick="closeMessageModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom: 16px;">
+                    <p style="margin-bottom: 8px;"><strong>From:</strong></p>
+                    <p id="msg-from" style="color: var(--text-secondary);"></p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <p style="margin-bottom: 8px;"><strong>Email:</strong></p>
+                    <p id="msg-email" style="color: var(--text-secondary);"></p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <p style="margin-bottom: 8px;"><strong>Subject:</strong></p>
+                    <p id="msg-subject" style="color: var(--text-secondary);"></p>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <p style="margin-bottom: 8px;"><strong>Message:</strong></p>
+                    <p id="msg-content" style="color: var(--text-secondary); white-space: pre-wrap; word-wrap: break-word; max-height: 300px; overflow-y: auto;"></p>
+                </div>
+                <div>
+                    <p style="margin-bottom: 8px;"><strong>Received:</strong></p>
+                    <p id="msg-date" style="color: var(--text-secondary); font-size: 12px;"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeMessageModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i data-lucide="check-circle"></i>
+        <span id="toast-message">Success!</span>
+    </div>
+    
+    <script>
+        let currentSection = 'dashboard';
+        let currentData = [];
+        let editingId = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            checkAuth();
+            loadDashboard();
+            setupNavigation();
+        });
+        
+        // Check authentication
+        async function checkAuth() {
+            try {
+                const res = await fetch('/api/auth/check');
+                const data = await res.json();
+                if (!data.isAuthenticated) {
+                    window.location.href = '/admin';
+                }
+            } catch (err) {
+                console.error('Auth check failed:', err);
+            }
+        }
+        
+        // Setup navigation
+        function setupNavigation() {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const section = item.dataset.section;
+                    switchSection(section);
+                    
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                });
+            });
+        }
+        
+        // Switch sections
+        function switchSection(section) {
+            currentSection = section;
+            document.getElementById('page-title').textContent = 
+                section.charAt(0).toUpperCase() + section.slice(1);
+            
+            const dashboardView = document.getElementById('dashboard-view');
+            const headerActions = document.getElementById('header-actions');
+            const addButtonHtml = `
+                <button class="btn btn-primary" onclick="openModal()">
+                    <i data-lucide="plus"></i>
+                    Add New
+                </button>
+            `;
+            
+            if (section === 'dashboard') {
+                dashboardView.style.display = 'block';
+                headerActions.style.display = 'none';
+                loadDashboard();
+            } else if (section === 'messages') {
+                dashboardView.style.display = 'none';
+                headerActions.style.display = 'flex';
+                headerActions.innerHTML = `
+                    <button class="btn btn-secondary" onclick="downloadMessagesExport()">
+                        <i data-lucide="download"></i>
+                        Download Excel (CSV)
+                    </button>
+                `;
+                loadMessages();
+            } else if (section === 'about') {
+                dashboardView.style.display = 'none';
+                headerActions.style.display = 'none';
+                loadAboutEditor();
+            } else if (section === 'hero') {
+                dashboardView.style.display = 'none';
+                headerActions.style.display = 'none';
+                loadHeroEditor();
+            } else if (section === 'settings') {
+                dashboardView.style.display = 'none';
+                headerActions.style.display = 'none';
+                loadSettings();
+            } else if (section === 'skills') {
+                dashboardView.style.display = 'none';
+                headerActions.style.display = 'flex';
+                headerActions.innerHTML = addButtonHtml;
+                loadSkills();
+            } else {
+                dashboardView.style.display = 'none';
+                headerActions.style.display = 'flex';
+                headerActions.innerHTML = addButtonHtml;
+                loadContent(section);
+            }
+
+            lucide.createIcons();
+        }
+        
+        // Load dashboard stats
+        async function loadDashboard() {
+            try {
+                const [exp, edu, proj, msgs] = await Promise.all([
+                    fetch('/api/content/experience').then(r => r.json()),
+                    fetch('/api/content/education').then(r => r.json()),
+                    fetch('/api/content/projects').then(r => r.json()),
+                    fetch('/api/contact/messages').then(r => r.json())
+                ]);
+                
+                document.getElementById('stat-experience').textContent = exp.length;
+                document.getElementById('stat-education').textContent = edu.length;
+                document.getElementById('stat-projects').textContent = proj.length;
+                document.getElementById('stat-messages').textContent = msgs.filter(m => !m.read).length;
+                document.getElementById('msg-count').textContent = msgs.filter(m => !m.read).length;
+                
+                // Show recent items overview
+                loadOverview();
+            } catch (err) {
+                showToast('Error loading dashboard', 'error');
+            }
+        }
+        
+        // Load overview for dashboard
+        async function loadOverview() {
+            try {
+                document.getElementById('table-head').style.display = '';
+                const [exp, edu, proj] = await Promise.all([
+                    fetch('/api/content/experience').then(r => r.json()),
+                    fetch('/api/content/education').then(r => r.json()),
+                    fetch('/api/content/projects').then(r => r.json())
+                ]);
+                
+                currentData = [...exp, ...edu, ...proj].sort((a, b) => 
+                    new Date(b.created_at) - new Date(a.created_at)
+                ).slice(0, 5);
+                
+                document.getElementById('content-title').textContent = 'Recent Activities';
+                renderTable(currentData, true);
+            } catch (err) {
+                console.error('Error loading overview:', err);
+            }
+        }
+        
+        // Load content section
+        async function loadContent(section) {
+            try {
+                const res = await fetch(`/api/content/${section}`);
+                currentData = await res.json();
+                document.getElementById('content-title').textContent = 
+                    section.charAt(0).toUpperCase() + section.slice(1);
+                document.getElementById('table-head').style.display = '';
+                renderTable(currentData);
+            } catch (err) {
+                showToast('Error loading content', 'error');
+            }
+        }
+
+        function renderCustomPanel(title, html) {
+            document.getElementById('content-title').textContent = title;
+            const tableHead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
+            const emptyState = document.getElementById('empty-state');
+
+            tableHead.style.display = 'none';
+            emptyState.style.display = 'none';
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="4" style="padding: 24px;">
+                        ${html}
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Render table
+        function renderTable(data, isOverview = false) {
+            const tbody = document.getElementById('table-body');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tbody.innerHTML = data.map(item => {
+                if (isOverview) {
+                    // Determine item type for proper actions
+                    let itemType = 'unknown';
+                    if (item.company) itemType = 'experience';
+                    else if (item.institution) itemType = 'education';
+                    else if (item.title && item.tags) itemType = 'projects';
+                    
+                    return `
+                        <tr>
+                            <td>${item.company || item.institution || item.title || 'Untitled'}</td>
+                            <td>${item.role || item.degree || (item.tags || []).join(', ') || ''}</td>
+                            <td><span class="badge ${item.hidden ? 'badge-hidden' : 'badge-visible'}">${item.hidden ? 'Hidden' : 'Visible'}</span></td>
+                            <td class="actions">
+                                <button class="btn-icon-only" onclick="editOverviewItem('${item.id}', '${itemType}')">
+                                    <i data-lucide="edit-2" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="toggleOverviewItem('${item.id}', '${itemType}')">
+                                    <i data-lucide="${item.hidden ? 'eye' : 'eye-off'}" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="deleteOverviewItem('${item.id}', '${itemType}')">
+                                    <i data-lucide="trash-2" width="16" height="16"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                if (currentSection === 'experience') {
+                    return `
+                        <tr>
+                            <td><strong>${item.company}</strong></td>
+                            <td>${item.role}<br><small>${item.period}</small></td>
+                            <td>
+                                <span class="badge badge-visible">${item.badge || 'Work'}</span>
+                                ${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : ''}
+                            </td>
+                            <td class="actions">
+                                <button class="btn-icon-only" onclick="editItem('${item.id}')">
+                                    <i data-lucide="edit-2" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="toggleItem('${item.id}')">
+                                    <i data-lucide="${item.hidden ? 'eye' : 'eye-off'}" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="deleteItem('${item.id}')">
+                                    <i data-lucide="trash-2" width="16" height="16"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } else if (currentSection === 'education') {
+                    return `
+                        <tr>
+                            <td><strong>${item.institution}</strong></td>
+                            <td>${item.degree}<br><small>${item.period}</small></td>
+                            <td>
+                                <span class="badge badge-visible">${item.badge || 'Education'}</span>
+                                ${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : ''}
+                            </td>
+                            <td class="actions">
+                                <button class="btn-icon-only" onclick="editItem('${item.id}')">
+                                    <i data-lucide="edit-2" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="toggleItem('${item.id}')">
+                                    <i data-lucide="${item.hidden ? 'eye' : 'eye-off'}" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="deleteItem('${item.id}')">
+                                    <i data-lucide="trash-2" width="16" height="16"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } else if (currentSection === 'projects') {
+                    return `
+                        <tr>
+                            <td><strong>${item.title}</strong>${item.featured ? ' <span class="badge badge-work">Featured</span>' : ''}</td>
+                            <td>${(item.tags || []).join(', ')}</td>
+                            <td>${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : '<span class="badge badge-visible">Visible</span>'}</td>
+                            <td class="actions">
+                                <button class="btn-icon-only" onclick="editItem('${item.id}')">
+                                    <i data-lucide="edit-2" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="toggleItem('${item.id}')">
+                                    <i data-lucide="${item.hidden ? 'eye' : 'eye-off'}" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="deleteItem('${item.id}')">
+                                    <i data-lucide="trash-2" width="16" height="16"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } else if (currentSection === 'skills') {
+                    return `
+                        <tr>
+                            <td><strong>${item.name}</strong></td>
+                            <td>${item.category}<br><small>Level: ${item.level || 0}/100</small></td>
+                            <td>${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : '<span class="badge badge-visible">Visible</span>'}</td>
+                            <td class="actions">
+                                <button class="btn-icon-only" onclick="editItem('${item.id}')">
+                                    <i data-lucide="edit-2" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="toggleItem('${item.id}')">
+                                    <i data-lucide="${item.hidden ? 'eye' : 'eye-off'}" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="deleteItem('${item.id}')">
+                                    <i data-lucide="trash-2" width="16" height="16"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                } else if (currentSection === 'blog') {
+                    return `
+                        <tr>
+                            <td><strong>${item.title}</strong>${item.featured ? ' <span class="badge badge-work">Featured</span>' : ''}</td>
+                            <td>${item.excerpt ? item.excerpt.substring(0, 50) + '...' : 'No excerpt'}</td>
+                            <td>
+                                ${item.published ? '<span class="badge badge-visible">Published</span>' : '<span class="badge badge-hidden">Draft</span>'}
+                                ${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : ''}
+                            </td>
+                            <td class="actions">
+                                <button class="btn-icon-only" onclick="editItem('${item.id}')">
+                                    <i data-lucide="edit-2" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="toggleItem('${item.id}')">
+                                    <i data-lucide="${item.hidden ? 'eye' : 'eye-off'}" width="16" height="16"></i>
+                                </button>
+                                <button class="btn-icon-only" onclick="deleteItem('${item.id}')">
+                                    <i data-lucide="trash-2" width="16" height="16"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                return `
+                    <tr>
+                        <td>${item.title || 'Untitled'}</td>
+                        <td>-</td>
+                        <td>${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : '<span class="badge badge-visible">Visible</span>'}</td>
+                        <td class="actions">
+                            <button class="btn-icon-only" onclick="editItem('${item.id}')">
+                                <i data-lucide="edit-2" width="16" height="16"></i>
+                            </button>
+                            <button class="btn-icon-only" onclick="deleteItem('${item.id}')">
+                                <i data-lucide="trash-2" width="16" height="16"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+        
+        // Open modal for add/edit
+        function openModal(id = null) {
+            editingId = id;
+            document.getElementById('modal-title').textContent = id ? 'Edit Item' : 'Add New Item';
+            document.getElementById('modal').classList.add('active');
+            
+            // Generate form based on section
+            const formHTML = generateFormHTML();
+            document.getElementById('modal-body').innerHTML = formHTML;
+            
+            // Fill data if editing
+            if (id) {
+                const item = currentData.find(i => i.id === id);
+                if (item) {
+                    // Handle all fields
+                    Object.keys(item).forEach(key => {
+                        const input = document.getElementById(`field-${key}`);
+                        if (input) {
+                            if (key === 'tags' && Array.isArray(item[key])) {
+                                input.value = item[key].join(', ');
+                            } else if (input.type === 'checkbox') {
+                                input.checked = item[key] === 1 || item[key] === true;
+                            } else {
+                                input.value = item[key];
+                            }
+                        }
+                    });
+                }
+            }
+        }
+        
+        // Generate form HTML based on current section
+        function generateFormHTML() {
+            const fields = {
+                experience: [
+                    { name: 'company', label: 'Company', type: 'text', required: true },
+                    { name: 'role', label: 'Role', type: 'text', required: true },
+                    { name: 'period', label: 'Period', type: 'text', placeholder: 'e.g., 2020 - Present', required: true },
+                    { name: 'description', label: 'Description', type: 'textarea' },
+                    { name: 'badge', label: 'Badge Tag', type: 'text', placeholder: 'e.g., Work, Internship, Apprenticeship' }
+                ],
+                education: [
+                    { name: 'institution', label: 'Institution', type: 'text', required: true },
+                    { name: 'degree', label: 'Degree', type: 'text', required: true },
+                    { name: 'period', label: 'Period', type: 'text', placeholder: 'e.g., 2018 - 2022', required: true },
+                    { name: 'description', label: 'Description', type: 'textarea' },
+                    { name: 'badge', label: 'Badge Tag', type: 'text', placeholder: 'e.g., University, Bootcamp, Certification' }
+                ],
+                projects: [
+                    { name: 'title', label: 'Title', type: 'text', required: true },
+                    { name: 'description', label: 'Description', type: 'textarea' },
+                    { name: 'tags', label: 'Categories (comma separated)', type: 'text', placeholder: 'e.g., Web Development, Design, Data' },
+                    { name: 'image_url', label: 'Image URL', type: 'text' },
+                    { name: 'image_upload', label: 'Or Upload Image', type: 'file' },
+                    { name: 'featured', label: 'Featured Project', type: 'checkbox' },
+                    { name: 'project_url', label: 'Project URL', type: 'text' },
+                    { name: 'github_url', label: 'GitHub URL', type: 'text' }
+                ],
+                blog: [
+                    { name: 'title', label: 'Title', type: 'text', required: true },
+                    { name: 'excerpt', label: 'Excerpt', type: 'textarea' },
+                    { name: 'content', label: 'Content', type: 'textarea', required: true },
+                    { name: 'tags', label: 'Tags (comma separated)', type: 'text' },
+                    { name: 'image_url', label: 'Image URL', type: 'text' },
+                    { name: 'image_upload', label: 'Or Upload Image', type: 'file' },
+                    { name: 'read_time', label: 'Read Time (minutes)', type: 'number', placeholder: 'e.g., 5' },
+                    { name: 'featured', label: 'Featured Blog', type: 'checkbox' },
+                    { name: 'published', label: 'Published', type: 'checkbox' }
+                ],
+                skills: [
+                    { name: 'category', label: 'Category Name', type: 'text', required: true, placeholder: 'e.g., Design & Development' },
+                    { name: 'skills', label: 'Skills (comma separated)', type: 'text', required: true, placeholder: 'HTML5, CSS3, JavaScript, UI/UX' }
+                ]
+            };
+            
+            const sectionFields = fields[currentSection] || [];
+            
+            return sectionFields.map(field => {
+                const required = field.required ? 'required' : '';
+                const placeholder = field.placeholder ? `placeholder="${field.placeholder}"` : '';
+                
+                if (field.type === 'textarea') {
+                    return `
+                        <div class="form-group">
+                            <label for="field-${field.name}">${field.label}</label>
+                            <textarea id="field-${field.name}" name="${field.name}" ${required} ${placeholder}></textarea>
+                        </div>
+                    `;
+                } else if (field.type === 'categories') {
+                    const checkboxes = field.options.map(opt => `
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; cursor: pointer;">
+                            <input type="checkbox" id="field-${field.name}-${opt}" name="${field.name}" value="${opt}" style="width: 16px; height: 16px; cursor: pointer;">
+                            ${opt}
+                        </label>
+                    `).join('');
+                    return `
+                        <div class="form-group">
+                            <label>${field.label}</label>
+                            <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+                                ${checkboxes}
+                            </div>
+                        </div>
+                    `;
+                } else if (field.type === 'select') {
+                    const options = field.options.map(opt => 
+                        `<option value="${opt}">${opt.charAt(0).toUpperCase() + opt.slice(1)}</option>`
+                    ).join('');
+                    return `
+                        <div class="form-group">
+                            <label for="field-${field.name}">${field.label}</label>
+                            <select id="field-${field.name}" name="${field.name}" ${required}>
+                                ${options}
+                            </select>
+                        </div>
+                    `;
+                } else if (field.type === 'file') {
+                    return `
+                        <div class="form-group">
+                            <label for="field-${field.name}">${field.label}</label>
+                            <input type="file" id="field-${field.name}" name="${field.name}" accept="image/*">
+                            <div id="upload-preview-${field.name}" style="margin-top: 10px;"></div>
+                        </div>
+                    `;
+                } else if (field.type === 'checkbox') {
+                    return `
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="field-${field.name}" name="${field.name}" value="1">
+                                ${field.label}
+                            </label>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="form-group">
+                            <label for="field-${field.name}">${field.label}</label>
+                            <input type="${field.type}" id="field-${field.name}" name="${field.name}" ${required} ${placeholder}>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            editingId = null;
+        }
+        
+        // Save item
+        async function saveItem() {
+            const formData = {};
+            const inputs = document.querySelectorAll('#modal-body input, #modal-body textarea, #modal-body select');
+            
+            // Handle file upload first
+            const fileInput = document.querySelector('#modal-body input[type="file"]');
+            let uploadedImageUrl = null;
+            
+            if (fileInput && fileInput.files[0]) {
+                const fileFormData = new FormData();
+                fileFormData.append('image', fileInput.files[0]);
+                
+                try {
+                    const uploadRes = await fetch('/api/upload/admin', {
+                        method: 'POST',
+                        body: fileFormData
+                    });
+                    
+                    if (uploadRes.ok) {
+                        const uploadData = await uploadRes.json();
+                        uploadedImageUrl = uploadData.url;
+                    }
+                } catch (err) {
+                    showToast('Error uploading image', 'error');
+                    return;
+                }
+            }
+            
+            // Process all other inputs
+            inputs.forEach(input => {
+                const fieldName = input.name;
+                
+                // Skip file inputs
+                if (input.type === 'file') {
+                    return;
+                }
+                
+                if (fieldName === 'tags') {
+                    formData[fieldName] = input.value.split(',').map(t => t.trim()).filter(t => t);
+                } else if (fieldName === 'skills') {
+                    formData[fieldName] = input.value.split(',').map(t => t.trim()).filter(t => t);
+                } else if (fieldName === 'level') {
+                    formData[fieldName] = parseInt(input.value) || 0;
+                } else if (input.type === 'number') {
+                    formData[fieldName] = parseInt(input.value);
+                } else if (input.type === 'checkbox') {
+                    // This is for featured, published, etc checkboxes (not categories)
+                    formData[fieldName] = input.checked ? 1 : 0;
+                } else {
+                    formData[fieldName] = input.value;
+                }
+            });
+            
+            // Use uploaded image URL if available
+            if (uploadedImageUrl) {
+                formData.image_url = uploadedImageUrl;
+            }
+            
+            try {
+                const url = editingId 
+                    ? `/api/content/${currentSection}/${editingId}`
+                    : `/api/content/${currentSection}`;
+                const method = editingId ? 'PUT' : 'POST';
+                
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (res.ok) {
+                    showToast(editingId ? 'Item updated!' : 'Item created!');
+                    closeModal();
+                    if (currentSection === 'skills') {
+                        loadSkills();
+                    } else {
+                        loadContent(currentSection);
+                    }
+                } else {
+                    throw new Error('Failed to save');
+                }
+            } catch (err) {
+                showToast('Error saving item', 'error');
+            }
+        }
+        
+        // Edit item
+        function editItem(id) {
+            openModal(id);
+        }
+        
+        // Toggle item visibility
+        async function toggleItem(id) {
+            try {
+                const res = await fetch(`/api/content/${currentSection}/${id}/toggle`, {
+                    method: 'PATCH'
+                });
+                
+                if (res.ok) {
+                    showToast('Visibility updated!');
+                    loadContent(currentSection);
+                }
+            } catch (err) {
+                showToast('Error updating visibility', 'error');
+            }
+        }
+        
+        // Delete item
+        async function deleteItem(id) {
+            if (!confirm('Are you sure? This cannot be undone.')) return;
+            
+            try {
+                const res = await fetch(`/api/content/${currentSection}/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (res.ok) {
+                    showToast('Item deleted!');
+                    loadContent(currentSection);
+                }
+            } catch (err) {
+                showToast('Error deleting item', 'error');
+            }
+        }
+        
+        // Load skills section
+        async function loadSkills() {
+            try {
+                document.getElementById('table-head').style.display = '';
+                const res = await fetch('/api/content/skills');
+                const skills = await res.json();
+                
+                currentData = skills;
+                document.getElementById('content-title').textContent = 'Skills & Expertise';
+                
+                const tbody = document.getElementById('table-body');
+                const emptyState = document.getElementById('empty-state');
+                
+                if (skills.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                tbody.innerHTML = skills.map(skill => `
+                    <tr>
+                        <td><strong>${skill.category}</strong></td>
+                        <td>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${(skill.skills || []).map(s => `<span class="skill-tag" style="background: var(--accent); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${s}</span>`).join('')}
+                            </div>
+                        </td>
+                        <td>${skill.hidden ? '<span class="badge badge-hidden">Hidden</span>' : '<span class="badge badge-visible">Visible</span>'}</td>
+                        <td class="actions">
+                            <button class="btn-icon-only" onclick="editItem('${skill.id}')">
+                                <i data-lucide="edit-2" width="16" height="16"></i>
+                            </button>
+                            <button class="btn-icon-only" onclick="toggleItem('${skill.id}')">
+                                <i data-lucide="${skill.hidden ? 'eye' : 'eye-off'}" width="16" height="16"></i>
+                            </button>
+                            <button class="btn-icon-only" onclick="deleteItem('${skill.id}')">
+                                <i data-lucide="trash-2" width="16" height="16"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                lucide.createIcons();
+            } catch (err) {
+                showToast('Error loading skills', 'error');
+            }
+        }
+        async function loadMessages() {
+            try {
+                document.getElementById('table-head').style.display = '';
+                const res = await fetch('/api/contact/messages');
+                const messages = await res.json();
+                
+                currentData = messages;
+                document.getElementById('content-title').textContent = 'Contact Messages';
+                
+                const tbody = document.getElementById('table-body');
+                const emptyState = document.getElementById('empty-state');
+                
+                if (messages.length === 0) {
+                    tbody.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                tbody.innerHTML = messages.map(msg => `
+                    <tr style="${msg.read ? '' : 'background: rgba(0, 212, 170, 0.05)'}">
+                        <td><strong>${msg.name}</strong><br><small>${msg.email}</small></td>
+                        <td>${msg.subject || 'No subject'}<br><small>${msg.message.substring(0, 50)}...</small></td>
+                        <td>${msg.read ? '<span class="badge badge-visible">Read</span>' : '<span class="badge badge-work">New</span>'}</td>
+                        <td class="actions">
+                            <button class="btn-icon-only" onclick="viewMessage('${msg.id}')">
+                                <i data-lucide="eye" width="16" height="16"></i>
+                            </button>
+                            <button class="btn-icon-only" onclick="deleteMessage('${msg.id}')">
+                                <i data-lucide="trash-2" width="16" height="16"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+                lucide.createIcons();
+            } catch (err) {
+                showToast('Error loading messages', 'error');
+            }
+        }
+
+        function downloadMessagesExport() {
+            window.open('/api/contact/messages/export', '_blank');
+        }
+        
+        // View message
+        async function viewMessage(id) {
+            const msg = currentData.find(m => m.id === id);
+            if (!msg) return;
+            
+            // Mark as read
+            if (!msg.read) {
+                await fetch(`/api/contact/messages/${id}/read`, { method: 'PATCH' });
+                loadMessages();
+                loadDashboard();
+            }
+            
+            // Populate modal with message content
+            document.getElementById('msg-from').textContent = msg.name;
+            document.getElementById('msg-email').textContent = msg.email;
+            document.getElementById('msg-subject').textContent = msg.subject || 'N/A';
+            document.getElementById('msg-content').textContent = msg.message;
+            document.getElementById('msg-date').textContent = new Date(msg.created_at).toLocaleString();
+            
+            // Show modal
+            document.getElementById('message-modal').classList.add('active');
+        }
+        
+        // Close message modal
+        function closeMessageModal() {
+            document.getElementById('message-modal').classList.remove('active');
+        }
+        
+        // Delete message
+        async function deleteMessage(id) {
+            if (!confirm('Delete this message?')) return;
+            
+            try {
+                await fetch(`/api/contact/messages/${id}`, { method: 'DELETE' });
+                showToast('Message deleted');
+                loadMessages();
+                loadDashboard();
+            } catch (err) {
+                showToast('Error deleting message', 'error');
+            }
+        }
+        
+        async function loadHeroEditor() {
+            try {
+                const res = await fetch('/api/content/settings');
+                const settings = await res.json();
+
+                renderCustomPanel('Hero Settings', `
+                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 760px;">
+                        <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 600;">Manage Hero Content</h3>
+                        <div style="display: grid; gap: 16px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">First Name (before animation)</label>
+                                    <input type="text" id="hero-name-input" value="${settings.hero_name || ''}" placeholder="e.g., Bishwash" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Last Name (after animation)</label>
+                                    <input type="text" id="hero-lastname-input" value="${settings.hero_lastname || ''}" placeholder="e.g., Acharya" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Tagline</label>
+                                <input type="text" id="hero-tagline-input" value="${settings.hero_tagline || ''}" placeholder="e.g., Building clean, useful digital experiences" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Roles (comma separated)</label>
+                                <input type="text" id="hero-roles-input" value="${settings.hero_roles || ''}" placeholder="Designer, Developer, Data/Business Analyst" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Years of Experience</label>
+                                    <input type="text" id="hero-years-input" value="${settings.hero_years_experience || ''}" placeholder="e.g., 2+" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Experience Label</label>
+                                    <input type="text" id="hero-years-label-input" value="${settings.hero_years_label || ''}" placeholder="e.g., Years Dev Experience" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Value</label>
+                                    <input type="text" id="hero-education-value-input" value="${settings.hero_education_value || ''}" placeholder="e.g., MSc" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Label</label>
+                                    <input type="text" id="hero-education-label-input" value="${settings.hero_education_label || ''}" placeholder="e.g., Information Systems, UWL" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                </div>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Location Label</label>
+                                <input type="text" id="hero-location-input" value="${settings.hero_location || ''}" placeholder="e.g., Based in London, UK" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current CV URL</label>
+                                <input type="text" id="hero-cv-url-input" value="${settings.hero_cv_url || ''}" placeholder="/uploads/your-cv.pdf" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Upload CV (PDF/DOC/DOCX)</label>
+                                <input type="file" id="hero-cv-upload-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" onclick="saveHeroEditor()">Save Hero Settings</button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            } catch (err) {
+                showToast('Error loading hero editor', 'error');
+            }
+        }
+
+        async function saveHeroEditor() {
+            try {
+                const savePairs = [
+                    ['hero_name', document.getElementById('hero-name-input').value],
+                    ['hero_lastname', document.getElementById('hero-lastname-input').value],
+                    ['hero_tagline', document.getElementById('hero-tagline-input').value],
+                    ['hero_roles', document.getElementById('hero-roles-input').value],
+                    ['hero_years_experience', document.getElementById('hero-years-input').value],
+                    ['hero_years_label', document.getElementById('hero-years-label-input').value],
+                    ['hero_education_value', document.getElementById('hero-education-value-input').value],
+                    ['hero_education_label', document.getElementById('hero-education-label-input').value],
+                    ['hero_location', document.getElementById('hero-location-input').value],
+                    ['hero_cv_url', document.getElementById('hero-cv-url-input').value]
+                ];
+
+                const cvFileInput = document.getElementById('hero-cv-upload-input');
+                if (cvFileInput && cvFileInput.files[0]) {
+                    const cvData = new FormData();
+                    cvData.append('image', cvFileInput.files[0]);
+                    const uploadRes = await fetch('/api/upload/admin', { method: 'POST', body: cvData });
+                    if (uploadRes.ok) {
+                        const uploaded = await uploadRes.json();
+                        savePairs.splice(9, 1, ['hero_cv_url', uploaded.url]);
+                    } else {
+                        throw new Error('CV upload failed');
+                    }
+                }
+
+                await Promise.all(savePairs.map(([key, value]) =>
+                    fetch(`/api/content/settings/${key}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ value: value || '' })
+                    })
+                ));
+
+                showToast('Hero settings saved!');
+            } catch (err) {
+                showToast('Error saving hero settings', 'error');
+            }
+        }
+
+        async function loadAboutEditor() {
+            try {
+                const res = await fetch('/api/content/settings');
+                const settings = await res.json();
+
+                renderCustomPanel('About Settings', `
+                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 760px;">
+                        <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 600;">Manage About Section</h3>
+                        <div style="display: grid; gap: 16px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Section Title</label>
+                                <input type="text" id="about-title-input" value="${settings.about_title || 'About Me'}" placeholder="e.g., About Me" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Paragraph 1</label>
+                                <textarea id="about-paragraph-1-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${settings.about_paragraph_1 || ''}</textarea>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Paragraph 2</label>
+                                <textarea id="about-paragraph-2-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${settings.about_paragraph_2 || ''}</textarea>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Paragraph 3</label>
+                                <textarea id="about-paragraph-3-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${settings.about_paragraph_3 || ''}</textarea>
+                            </div>
+                            <h4 style="margin-top: 12px; margin-bottom: 8px; font-size: 16px; font-weight: 600;">Timeline Nodes</h4>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Title</label>
+                                <input type="text" id="about-edu-title-input" value="${settings.about_edu_title || 'Education'}" placeholder="e.g., Education" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Description</label>
+                                <input type="text" id="about-edu-desc-input" value="${settings.about_edu_desc || 'MSc Information Systems'}" placeholder="e.g., MSc Information Systems" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Subtitle</label>
+                                <input type="text" id="about-edu-sub-input" value="${settings.about_edu_sub || 'University of West London'}" placeholder="e.g., University of West London" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Experience Title</label>
+                                <input type="text" id="about-exp-title-input" value="${settings.about_exp_title || 'Experience'}" placeholder="e.g., Experience" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Experience Description</label>
+                                <input type="text" id="about-exp-desc-input" value="${settings.about_exp_desc || 'Web Development & QA'}" placeholder="e.g., Web Development & QA" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Experience Subtitle</label>
+                                <input type="text" id="about-exp-sub-input" value="${settings.about_exp_sub || 'Innovate Tech'}" placeholder="e.g., Innovate Tech" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current Title</label>
+                                <input type="text" id="about-current-title-input" value="${settings.about_current_title || 'Current'}" placeholder="e.g., Current" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current Description</label>
+                                <input type="text" id="about-current-desc-input" value="${settings.about_current_desc || 'Data & Analytics'}" placeholder="e.g., Data & Analytics" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current Subtitle</label>
+                                <input type="text" id="about-current-sub-input" value="${settings.about_current_sub || 'London, UK'}" placeholder="e.g., London, UK" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">About Image URL</label>
+                                <input type="text" id="about-image-url-input" value="${settings.about_image || ''}" placeholder="/uploads/about-image.jpg" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Upload About Image</label>
+                                <input type="file" id="about-image-upload-input" accept="image/*" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                            </div>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" onclick="saveAboutEditor()">Save About Settings</button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            } catch (err) {
+                showToast('Error loading about editor', 'error');
+            }
+        }
+
+        async function saveAboutEditor() {
+            try {
+                const savePairs = [
+                    ['about_title', document.getElementById('about-title-input').value],
+                    ['about_paragraph_1', document.getElementById('about-paragraph-1-input').value],
+                    ['about_paragraph_2', document.getElementById('about-paragraph-2-input').value],
+                    ['about_paragraph_3', document.getElementById('about-paragraph-3-input').value],
+                    ['about_edu_title', document.getElementById('about-edu-title-input').value],
+                    ['about_edu_desc', document.getElementById('about-edu-desc-input').value],
+                    ['about_edu_sub', document.getElementById('about-edu-sub-input').value],
+                    ['about_exp_title', document.getElementById('about-exp-title-input').value],
+                    ['about_exp_desc', document.getElementById('about-exp-desc-input').value],
+                    ['about_exp_sub', document.getElementById('about-exp-sub-input').value],
+                    ['about_current_title', document.getElementById('about-current-title-input').value],
+                    ['about_current_desc', document.getElementById('about-current-desc-input').value],
+                    ['about_current_sub', document.getElementById('about-current-sub-input').value],
+                    ['about_image', document.getElementById('about-image-url-input').value]
+                ];
+
+                const imageInput = document.getElementById('about-image-upload-input');
+                if (imageInput && imageInput.files[0]) {
+                    const imageData = new FormData();
+                    imageData.append('image', imageInput.files[0]);
+                    const uploadRes = await fetch('/api/upload/admin', { method: 'POST', body: imageData });
+                    if (uploadRes.ok) {
+                        const uploaded = await uploadRes.json();
+                        savePairs.splice(13, 1, ['about_image', uploaded.url]);
+                    } else {
+                        throw new Error('Image upload failed');
+                    }
+                }
+
+                await Promise.all(savePairs.map(([key, value]) =>
+                    fetch(`/api/content/settings/${key}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ value: value || '' })
+                    })
+                ));
+
+                showToast('About settings saved!');
+            } catch (err) {
+                showToast('Error saving about settings', 'error');
+            }
+        }
+
+        // Load settings (Security Settings)
+        async function loadSettings() {
+            document.getElementById('content-title').textContent = 'Security Settings';
+            
+            try {
+                const settingsRes = await fetch('/api/content/settings/secure');
+                if (!settingsRes.ok) {
+                    const errData = await settingsRes.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Failed to load settings');
+                }
+                const settings = await settingsRes.json();
+
+                let currentUsername = 'admin';
+                try {
+                    const adminInfoRes = await fetch('/api/auth/admin-info');
+                    if (adminInfoRes.ok) {
+                        const adminInfo = await adminInfoRes.json();
+                        currentUsername = adminInfo.username || 'admin';
+                    }
+                } catch (e) { /* fallback to default */ }
+
+                const recoveryEmail = settings.recovery_email || '';
+                const smtpUser = settings.smtp_user || '';
+                const smtpPassSet = settings.smtp_app_password ? true : false;
+
+                renderCustomPanel('Security Settings', `
+                    <div style="display: grid; gap: 24px; max-width: 500px;">
+
+                    <!-- Email Configuration -->
+                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                        <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Email Configuration</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                            Configure your Gmail SMTP for sending contact notifications and password reset emails.
+                            <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--accent);">Get an App Password here</a>
+                            (requires 2-Step Verification enabled).
+                        </p>
+                        <div style="display: grid; gap: 12px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Gmail Address (sender)</label>
+                                <input type="email" id="smtp-user" value="${smtpUser}" placeholder="your-gmail@gmail.com"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">App Password</label>
+                                <input type="password" id="smtp-app-password" placeholder="${smtpPassSet ? 'Password is set (enter new to change)' : 'Enter 16-char App Password'}"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Leave blank to keep current password. Google Account \u2192 Security \u2192 App Passwords.</p>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Recovery Email (where reset codes are sent)</label>
+                                <input type="email" id="recovery-email" value="${recoveryEmail}" placeholder="your-recovery@email.com"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">If empty, reset codes go to the Gmail address above.</p>
+                            </div>
+                            <button class="btn btn-primary" onclick="saveEmailConfig()">Save Email Configuration</button>
+                            <button class="btn btn-secondary" onclick="testEmailConfig()" style="font-size: 13px;">Send Test Email</button>
+                        </div>
+                    </div>
+
+                    <!-- Admin Account -->
+                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                        <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Admin Account</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Change your login username. You can use an email address or any name you prefer.</p>
+                        <div style="display: grid; gap: 12px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Current Username</label>
+                                <input type="text" id="current-username-display" value="${currentUsername}" disabled
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-muted); font-size: 14px; opacity: 0.7;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">New Username</label>
+                                <input type="text" id="new-username" placeholder="Enter new username or email"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Letters, numbers, dots, hyphens, underscores, and @ allowed.</p>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Confirm with Password</label>
+                                <input type="password" id="username-change-password" placeholder="Enter your current password"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            <button class="btn btn-primary" onclick="changeUsername()" style="margin-top: 4px;">Change Username</button>
+                        </div>
+                    </div>
+
+                    <!-- Change Password -->
+                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                        <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Change Password</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Update your admin login password. This is saved securely in the database.</p>
+                        <div style="display: grid; gap: 12px;">
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Current Password</label>
+                                <input type="password" id="current-password" placeholder="Enter current password"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">New Password</label>
+                                <input type="password" id="new-password" placeholder="Enter new password"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Confirm New Password</label>
+                                <input type="password" id="confirm-password" placeholder="Confirm new password"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            <button class="btn btn-primary" onclick="changePassword()" style="margin-top: 4px;">Change Password</button>
+                        </div>
+                    </div>
+
+                    </div>
+                `);
+            } catch (err) {
+                console.error('Settings load error:', err);
+                showToast(err.message || 'Error loading settings', 'error');
+            }
+        }
+
+        // Save email configuration (SMTP + recovery email)
+        async function saveEmailConfig() {
+            const smtpUser = document.getElementById('smtp-user').value.trim();
+            const smtpPass = document.getElementById('smtp-app-password').value.trim();
+            const recoveryEmail = document.getElementById('recovery-email').value.trim();
+
+            if (smtpUser && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(smtpUser)) {
+                showToast('Please enter a valid Gmail address', 'error');
+                return;
+            }
+            if (recoveryEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recoveryEmail)) {
+                showToast('Please enter a valid recovery email', 'error');
+                return;
+            }
+
+            try {
+                const saves = [];
+                saves.push(fetch('/api/content/settings/smtp_user', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: smtpUser })
+                }));
+                if (smtpPass) {
+                    saves.push(fetch('/api/content/settings/smtp_app_password', {
+                        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ value: smtpPass })
+                    }));
+                }
+                saves.push(fetch('/api/content/settings/recovery_email', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ value: recoveryEmail })
+                }));
+
+                const results = await Promise.all(saves);
+                const allOk = results.every(r => r.ok);
+                if (allOk) {
+                    showToast('Email configuration saved!');
+                    if (smtpPass) {
+                        document.getElementById('smtp-app-password').value = '';
+                        document.getElementById('smtp-app-password').placeholder = 'Password is set (enter new to change)';
+                    }
+                } else {
+                    showToast('Error saving some settings', 'error');
+                }
+            } catch (err) {
+                showToast('Error saving email configuration', 'error');
+            }
+        }
+
+        // Send test email
+        async function testEmailConfig() {
+            try {
+                const res = await fetch('/api/auth/test-email', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || 'Test email sent!');
+                } else {
+                    showToast(data.error || 'Failed to send test email', 'error');
+                }
+            } catch (err) {
+                showToast('Error sending test email', 'error');
+            }
+        }
+        
+        // Change username
+        async function changeUsername() {
+            const newUsername = document.getElementById('new-username').value.trim();
+            const password = document.getElementById('username-change-password').value;
+
+            if (!newUsername || !password) {
+                showToast('Please enter a new username and your current password', 'error');
+                return;
+            }
+            if (newUsername.length < 3) {
+                showToast('Username must be at least 3 characters', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/change-username', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentPassword: password, newUsername })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    showToast(data.message || 'Username changed!');
+                    document.getElementById('current-username-display').value = newUsername;
+                    document.getElementById('new-username').value = '';
+                    document.getElementById('username-change-password').value = '';
+                } else {
+                    showToast(data.error || 'Error changing username', 'error');
+                }
+            } catch (err) {
+                showToast('Error changing username', 'error');
+            }
+        }
+
+        // Change password
+        async function changePassword() {
+            const currentPassword = document.getElementById('current-password').value;
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                showToast('All fields are required', 'error');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                showToast('New passwords do not match', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showToast('Password must be at least 6 characters long', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        currentPassword,
+                        newPassword
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    showToast('Password changed successfully!');
+                    document.getElementById('current-password').value = '';
+                    document.getElementById('new-password').value = '';
+                    document.getElementById('confirm-password').value = '';
+                } else {
+                    showToast(data.error || 'Error changing password', 'error');
+                }
+            } catch (err) {
+                showToast('Error changing password', 'error');
+            }
+        }
+        
+        // Edit overview item
+        function editOverviewItem(id, type) {
+            currentSection = type;
+            openModal(id);
+        }
+        
+        // Toggle overview item visibility
+        async function toggleOverviewItem(id, type) {
+            try {
+                const res = await fetch(`/api/content/${type}/${id}/toggle`, {
+                    method: 'PATCH'
+                });
+                
+                if (res.ok) {
+                    showToast('Visibility updated!');
+                    loadOverview();
+                }
+            } catch (err) {
+                showToast('Error updating visibility', 'error');
+            }
+        }
+        
+        // Delete overview item
+        async function deleteOverviewItem(id, type) {
+            if (!confirm('Are you sure? This cannot be undone.')) return;
+            
+            try {
+                const res = await fetch(`/api/content/${type}/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (res.ok) {
+                    showToast('Item deleted!');
+                    loadOverview();
+                }
+            } catch (err) {
+                showToast('Error deleting item', 'error');
+            }
+        }
+        
+        // Logout
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+                window.location.href = '/admin';
+            } catch (err) {
+                showToast('Error logging out', 'error');
+            }
+        }
+        
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            toast.className = `toast ${type} show`;
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Close modal on overlay click
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target.id === 'modal') closeModal();
+        });
+        
+        // Close message modal on overlay click
+        document.getElementById('message-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'message-modal') closeMessageModal();
+        });
+    </script>
+</body>
+</html>
