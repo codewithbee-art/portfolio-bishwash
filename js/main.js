@@ -1007,12 +1007,17 @@ class PortfolioApp {
                 const lastNameEl = document.getElementById('hero-name-lastname');
                 // Remove existing first-name letter spans only
                 [...heroTitle.querySelectorAll(':scope > .name-letter')].forEach(el => el.remove());
-                // Rebuild first name letters before the lastname span
-                settings.hero_name.trim().split('').forEach(char => {
+                // Rebuild first name letters before the lastname span with animation
+                settings.hero_name.trim().split('').forEach((char, i) => {
                     const span = document.createElement('span');
                     span.className = 'name-letter';
                     span.textContent = char === ' ' ? '\u00A0' : char;
+                    span.style.opacity = '0';
+                    span.style.display = 'inline-block';
+                    span.style.transition = 'opacity 0.3s ease';
                     heroTitle.insertBefore(span, lastNameEl);
+                    // Animate in with delay
+                    setTimeout(() => { span.style.opacity = '1'; }, i * 80);
                 });
             }
         }
