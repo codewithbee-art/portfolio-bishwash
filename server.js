@@ -11,6 +11,9 @@ const { initialize } = require('./database/db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for Render's load balancer
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({
     contentSecurityPolicy: false,
