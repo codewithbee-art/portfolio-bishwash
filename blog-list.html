@@ -627,10 +627,10 @@
                 item.onclick = () => window.location.href = `/blog/${post.id}`;
 
                 const imageHtml = post.image_url
-                    ? `<div class="blog-list-item-image"><img src="${post.image_url}" alt="${post.title}" loading="lazy" onerror="this.src='assets/blog/placeholder.jpg'"></div>`
-                    : '<div class="blog-list-item-image" style="background: var(--bg-dark);"></div>';
+                    ? `<div class="blog-list-item-image"><img src="${post.image_url}" alt="${post.title}" loading="lazy" onerror="this.src='assets/blog/placeholder.jpg'">${post.featured ? '<span class="blog-featured-badge">Featured</span>' : ''}</div>`
+                    : `<div class="blog-list-item-image" style="background: var(--bg-dark);">${post.featured ? '<span class="blog-featured-badge">Featured</span>' : ''}</div>`;
 
-                const featuredBadge = post.featured ? '<span class="blog-featured-badge">Featured</span>' : '';
+                const featuredBadge = ''; // Badge is now in imageHtml
                 const tagsHtml = (post.tags || []).map(t => `<span class="blog-list-item-tag">${t}</span>`).join('');
 
                 item.innerHTML = `
