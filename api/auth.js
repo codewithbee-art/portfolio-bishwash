@@ -75,22 +75,36 @@ const initializeHashedPassword = async () => {
         const dbHash = await getDbSetting('admin_password_hash');
         if (dbHash) {
             hashedPassword = dbHash;
-            console.log('✓ Admin password loaded from database');
+            console.log('✓ Admin password loaded from database (preserving existing credentials)');
             return;
         }
 
-        // 2) Fall back to .env password
-        if (!ENV_PASSWORD) {
-            console.error('⚠️  WARNING: ADMIN_PASSWORD not set in .env — using insecure default. Change before deploying!');
-            hashedPassword = await bcryptjs.hash('changeme', 10);
-        } else if (ENV_PASSWORD.startsWith('$2')) {
-            hashedPassword = ENV_PASSWORD;
-        } else {
-            hashedPassword = await bcryptjs.hash(ENV_PASSWORD, 10);
-        }
+        // 2) Only set default password if database is completely empty
+        const settingsCount = await new Promise((resolve, reject) => {
+            db.get("SELECT COUNT(*) as count FROM settings", (err, row) => {
+                if (err) reject(err);
+                else resolve(row.count);
+            });
+        });
 
-        // Persist initial hash to DB so future changes are durable
-        await setDbSetting('admin_password_hash', hashedPassword);
+        if (settingsCount === 0) {
+            console.log('Database is empty, setting initial admin password...');
+            // 3) Fall back to .env password for initial setup
+            if (!ENV_PASSWORD) {
+                console.error('⚠️  WARNING: ADMIN_PASSWORD not set in .env — using insecure default. Change before deploying!');
+                hashedPassword = await bcryptjs.hash('changeme', 10);
+            } else if (ENV_PASSWORD.startsWith('$2')) {
+                hashedPassword = ENV_PASSWORD;
+            } else {
+                hashedPassword = await bcryptjs.hash(ENV_PASSWORD, 10);
+            }
+
+            // Persist initial hash to DB so future changes are durable
+            await setDbSetting('admin_password_hash', hashedPassword);
+            console.log('✓ Initial admin password set from environment variables');
+        } else {
+            console.log('✓ Database has existing data, admin password already configured');
+        }
     } catch (err) {
         console.error('Error initializing password:', err);
         process.exit(1);

@@ -9,6 +9,8 @@ if (!fs.existsSync(dbDir)) {
 }
 
 const dbPath = path.join(dbDir, 'portfolio.db');
+console.log('Database path:', dbPath);
+console.log('Database exists:', fs.existsSync(dbPath));
 const db = new sqlite3.Database(dbPath);
 
 const initialize = () => {
@@ -97,10 +99,11 @@ const initialize = () => {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
-        // Insert default settings if not exists
-        db.get("SELECT COUNT(*) as count FROM settings WHERE key = 'hero_name'", (err, row) => {
+        // Insert default settings ONLY if tables are completely empty
+        db.get("SELECT COUNT(*) as count FROM settings", (err, row) => {
             if (err) return console.error(err);
             if (row.count === 0) {
+                console.log('Database is empty, inserting default settings...');
                 const defaults = [
                     ['hero_name', 'Bishwash'],
                     ['hero_lastname', 'Acharya'],
@@ -110,6 +113,8 @@ const initialize = () => {
                 const stmt = db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)");
                 defaults.forEach(([key, value]) => stmt.run(key, value));
                 stmt.finalize();
+            } else {
+                console.log('Database contains existing data, preserving...');
             }
         });
 
