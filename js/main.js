@@ -905,6 +905,46 @@ class PortfolioApp {
                 article.appendChild(contentDiv);
             }
             
+            if (!post.featured) {
+                // Regular post: card layout
+                const imageDiv = document.createElement('div');
+                imageDiv.className = 'blog-image';
+                if (post.image_url) {
+                    const img = document.createElement('img');
+                    img.src = post.image_url;
+                    img.alt = post.title;
+                    img.loading = 'lazy';
+                    img.onerror = function() { this.src = 'assets/blog/placeholder.jpg'; };
+                    imageDiv.appendChild(img);
+                }
+                article.appendChild(imageDiv);
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'blog-content';
+                
+                const title = document.createElement('h3');
+                const titleLink = document.createElement('a');
+                titleLink.href = `/blog/${post.id}`;
+                titleLink.textContent = post.title;
+                title.appendChild(titleLink);
+                contentDiv.appendChild(title);
+                
+                const excerpt = document.createElement('p');
+                excerpt.textContent = post.excerpt || '';
+                contentDiv.appendChild(excerpt);
+                
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'blog-meta';
+                
+                const readTime = document.createElement('span');
+                readTime.className = 'read-time';
+                readTime.textContent = `${post.read_time || 5} min read`;
+                metaDiv.appendChild(readTime);
+                
+                contentDiv.appendChild(metaDiv);
+                article.appendChild(contentDiv);
+            }
+            
             container.appendChild(article);
         });
         
@@ -1078,6 +1118,11 @@ class PortfolioApp {
             }
         });
     }
+}
+
+// Initialize Lucide icons
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
 }
 
 // Initialize the portfolio app
