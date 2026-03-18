@@ -789,29 +789,50 @@ class PortfolioApp {
 
     // Render blog posts
     renderBlog(posts) {
-        if (!posts || posts.length === 0) return;
+        console.log('renderBlog called with posts:', posts);
+        
+        if (!posts || posts.length === 0) {
+            console.log('No posts to render');
+            return;
+        }
         
         const container = document.querySelector('.blog-grid');
-        if (!container) return;
+        if (!container) {
+            console.log('Blog grid container not found');
+            return;
+        }
         
         const publishedPosts = posts.filter(p => p.published && !p.hidden);
-        if (publishedPosts.length === 0) return;
+        console.log('Published posts:', publishedPosts.length);
+        
+        if (publishedPosts.length === 0) {
+            console.log('No published posts found');
+            return;
+        }
         
         // Separate featured and non-featured posts
         const featuredPost = publishedPosts.find(p => p.featured);
         const otherPosts = publishedPosts.filter(p => !p.featured);
+        
+        console.log('Featured post:', featuredPost ? 'Yes' : 'No');
+        console.log('Other posts:', otherPosts.length);
         
         // Show max 1 featured + 3 other posts on homepage
         const displayPosts = [];
         if (featuredPost) displayPosts.push(featuredPost);
         displayPosts.push(...otherPosts.slice(0, 3));
         
+        console.log('Total posts to display:', displayPosts.length);
+        
         // Clear container safely
         container.innerHTML = '';
         
-        displayPosts.forEach(post => {
+        displayPosts.forEach((post, index) => {
+            console.log(`Rendering post ${index + 1}:`, post.title, 'featured:', post.featured);
+            
             const article = document.createElement('article');
             article.className = `blog-card` + (post.featured ? ' featured-post' : '');
+            console.log('Article classes:', article.className);
             
             if (post.featured) {
                 // Featured post: grid layout with image on left, content on right
