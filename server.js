@@ -9,6 +9,7 @@ const multer = require('multer');
 const { initialize } = require('./database/db');
 
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 
 // Trust proxy for Render's load balancer
@@ -185,8 +186,20 @@ app.use('/api/auth', require('./api/auth'));
 app.use('/api/content', require('./api/content'));
 app.use('/api/contact', require('./api/contact'));
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Serve uploaded files with fallback
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    maxAge: '1d', // Cache for 1 day
+    setHeaders: (res, path) => {
+        // Add fallback for missing images
+        if (path.endsWith('.jpg') || path.endsWith('.png') || path.endsWith('.webp')) {
+            res.on('finish', () => {
+                if (res.statusCode === 404) {
+                    console.log('Missing uploaded file:', path);
+                }
+            });
+        }
+    }
+}));
 
 // File upload routes - PROTECTED: admin only
 app.post('/api/upload', (req, res, next) => {
@@ -296,6 +309,20 @@ app.use((err, req, res, next) => {
     }
     console.error(err.stack);
     res.status(500).json({ error: 'Something went wrong!' });
+});
+
+// Fallback route for missing uploaded files
+app.get('/uploads/*', (req, res) => {
+    const filePath = req.path;
+    console.log('Missing uploaded file requested:', filePath);
+    
+    // Serve a placeholder image for missing files
+    const placeholderPath = path.join(__dirname, 'assets', 'projects', 'placeholder.jpg');
+    if (fs.existsSync(placeholderPath)) {
+        res.sendFile(placeholderPath);
+    } else {
+        res.status(404).json({ error: 'File not found' });
+    }
 });
 
 // Startup checks

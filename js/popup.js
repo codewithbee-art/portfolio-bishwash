@@ -14,7 +14,7 @@ class PopupManager {
             overlay.innerHTML = `
                 <div class="popup-modal">
                     <div class="popup-icon">
-                        <i data-lucide></i>
+                        <i data-lucide="info"></i>
                     </div>
                     <h3 class="popup-title"></h3>
                     <p class="popup-message"></p>
@@ -23,9 +23,11 @@ class PopupManager {
             `;
             document.body.appendChild(overlay);
             
-            // Initialize Lucide icons for popup
+            // Initialize Lucide icons for popup immediately
             if (typeof lucide !== 'undefined') {
-                lucide.createIcons();
+                setTimeout(() => {
+                    lucide.createIcons();
+                }, 10);
             }
         }
     }
@@ -100,23 +102,27 @@ class PopupManager {
         iconContainer.className = 'popup-icon';
         iconContainer.classList.add(type);
         
-        // Set icon
-        if (iconName && typeof lucide !== 'undefined' && iconName !== '') {
-            iconElement.setAttribute('data-lucide', iconName);
-            lucide.createIcons();
-        } else {
-            // Use default icons based on type
-            const defaultIcons = {
-                success: 'check-circle',
-                error: 'x-circle', 
-                info: 'info'
-            };
-            const defaultIcon = defaultIcons[type] || 'info';
-            iconElement.setAttribute('data-lucide', defaultIcon);
-            if (typeof lucide !== 'undefined') {
+        // Set icon with fallback
+        const finalIconName = (iconName && iconName !== '') ? iconName : this.getDefaultIcon(type);
+        iconElement.setAttribute('data-lucide', finalIconName);
+        
+        // Re-create Lucide icons after setting the new icon
+        if (typeof lucide !== 'undefined') {
+            // Small delay to ensure DOM is updated
+            setTimeout(() => {
                 lucide.createIcons();
-            }
+            }, 10);
         }
+    }
+    
+    getDefaultIcon(type) {
+        const defaultIcons = {
+            success: 'check-circle',
+            error: 'x-circle', 
+            info: 'info',
+            warning: 'alert-triangle'
+        };
+        return defaultIcons[type] || 'info';
     }
 
     setButtons(buttons) {
