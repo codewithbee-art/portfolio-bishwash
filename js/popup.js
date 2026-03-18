@@ -1,8 +1,8 @@
-// Simple working popup system
+// Simple, bulletproof popup system
 class SimplePopup {
     constructor() {
         this.createPopupContainer();
-        this.init();
+        this.bindEvents();
     }
 
     createPopupContainer() {
@@ -23,26 +23,27 @@ class SimplePopup {
         }
     }
 
-    init() {
-        this.overlay = document.getElementById('simple-popup-overlay');
-        this.icon = this.overlay.querySelector('.simple-popup-icon-text');
-        this.title = this.overlay.querySelector('.simple-popup-title');
-        this.message = this.overlay.querySelector('.simple-popup-message');
-        this.button = this.overlay.querySelector('.simple-popup-button');
-
-        // Close handlers
-        this.button.addEventListener('click', () => this.hide());
-        this.overlay.addEventListener('click', (e) => {
-            if (e.target === this.overlay) this.hide();
+    bindEvents() {
+        const overlay = document.getElementById('simple-popup-overlay');
+        const button = overlay.querySelector('.simple-popup-button');
+        
+        button.addEventListener('click', () => this.hide());
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) this.hide();
         });
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.overlay.classList.contains('active')) {
+            if (e.key === 'Escape' && overlay.classList.contains('active')) {
                 this.hide();
             }
         });
     }
 
     show(type, title, message) {
+        const overlay = document.getElementById('simple-popup-overlay');
+        const icon = overlay.querySelector('.simple-popup-icon-text');
+        const titleEl = overlay.querySelector('.simple-popup-title');
+        const messageEl = overlay.querySelector('.simple-popup-message');
+
         // Set icon based on type
         const icons = {
             success: '✅',
@@ -50,29 +51,30 @@ class SimplePopup {
             info: 'ℹ️',
             warning: '⚠️'
         };
-        this.icon.textContent = icons[type] || 'ℹ️';
+        icon.textContent = icons[type] || 'ℹ️';
 
         // Set content
-        this.title.textContent = title;
-        this.message.textContent = message;
+        titleEl.textContent = title;
+        messageEl.textContent = message;
 
         // Show popup
-        this.overlay.classList.add('active');
+        overlay.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
 
     hide() {
-        this.overlay.classList.remove('active');
+        const overlay = document.getElementById('simple-popup-overlay');
+        overlay.classList.remove('active');
         document.body.style.overflow = '';
     }
 }
 
-// Initialize popup when DOM is ready
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.simplePopup = new SimplePopup();
+    const popup = new SimplePopup();
     
     // Global functions
-    window.showSuccess = (title, message) => window.simplePopup.show('success', title, message);
-    window.showError = (title, message) => window.simplePopup.show('error', title, message);
-    window.showInfo = (title, message) => window.simplePopup.show('info', title, message);
+    window.showSuccess = (title, message) => popup.show('success', title, message);
+    window.showError = (title, message) => popup.show('error', title, message);
+    window.showInfo = (title, message) => popup.show('info', title, message);
 });

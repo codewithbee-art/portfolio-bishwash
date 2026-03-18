@@ -173,12 +173,11 @@ class EmailVerificationService {
         ];
 
         const suspiciousPatterns = [
-            /^[a-z]{1,2}\d{3,}@/, // 1-2 letters + 3+ numbers
+            /^[a-z]{1,2}\d{4,}@/, // 1-2 letters + 4+ numbers (like ab1234@)
             /test123|demo123|fake123|sample123/i,
             /^test@|^demo@|^fake@|^sample@|^random@/,
-            /\d{4,}@/, // 4+ consecutive numbers
-            /^[a-z]{1,3}@/, // 1-3 letter usernames
-            /(test|demo|fake|sample|random|noreply|no-reply)/i
+            /\d{5,}@/, // 5+ consecutive numbers (more suspicious)
+            /(test|demo|fake|sample|random|noreply|no-reply)\d*@/i // suspicious words with numbers
         ];
 
         const domain = email.split('@')[1]?.toLowerCase();
