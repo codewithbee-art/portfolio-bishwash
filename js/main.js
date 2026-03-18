@@ -816,8 +816,7 @@ class PortfolioApp {
             if (post.featured) {
                 // Featured post: grid layout with image on left, content on right
                 const imageDiv = document.createElement('div');
-                imageDiv.className = 'blog-image';
-                imageDiv.style.position = 'relative';
+                imageDiv.className = 'featured-post-image';
                 
                 if (post.image_url) {
                     const img = document.createElement('img');
@@ -830,7 +829,7 @@ class PortfolioApp {
                 
                 // Add badge on top of image
                 const badge = document.createElement('div');
-                badge.className = 'blog-featured-badge';
+                badge.className = 'featured-badge';
                 badge.textContent = 'Featured';
                 badge.style.position = 'absolute';
                 badge.style.top = '16px';
@@ -842,7 +841,15 @@ class PortfolioApp {
                 article.appendChild(imageDiv);
                 
                 const contentDiv = document.createElement('div');
-                contentDiv.className = 'blog-content';
+                contentDiv.className = 'featured-post-content';
+                
+                // Add category tag
+                if (post.tags && post.tags.length > 0) {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'post-category';
+                    categoryDiv.textContent = post.tags[0];
+                    contentDiv.appendChild(categoryDiv);
+                }
                 
                 const title = document.createElement('h3');
                 const titleLink = document.createElement('a');
@@ -856,7 +863,7 @@ class PortfolioApp {
                 contentDiv.appendChild(excerpt);
                 
                 const metaDiv = document.createElement('div');
-                metaDiv.className = 'blog-meta';
+                metaDiv.className = 'post-meta';
                 
                 const readTime = document.createElement('span');
                 readTime.className = 'read-time';
@@ -882,6 +889,14 @@ class PortfolioApp {
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'blog-content';
                 
+                // Add category tag
+                if (post.tags && post.tags.length > 0) {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = 'post-category';
+                    categoryDiv.textContent = post.tags[0];
+                    contentDiv.appendChild(categoryDiv);
+                }
+                
                 const title = document.createElement('h3');
                 const titleLink = document.createElement('a');
                 titleLink.href = `/blog/${post.id}`;
@@ -894,7 +909,7 @@ class PortfolioApp {
                 contentDiv.appendChild(excerpt);
                 
                 const metaDiv = document.createElement('div');
-                metaDiv.className = 'blog-meta';
+                metaDiv.className = 'post-meta';
                 
                 const readTime = document.createElement('span');
                 readTime.className = 'read-time';
