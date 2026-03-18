@@ -662,6 +662,8 @@ class PortfolioApp {
                 badge.style.top = '16px';
                 badge.style.left = '16px';
                 badge.style.zIndex = '10';
+                badge.style.width = 'fit-content';
+                badge.style.display = 'inline-block';
                 imageDiv.appendChild(badge);
                 article.appendChild(imageDiv);
                 
@@ -807,16 +809,14 @@ class PortfolioApp {
         // Clear container safely
         container.innerHTML = '';
         
-        displayPosts.forEach((post, index) => {
+        displayPosts.forEach(post => {
             const article = document.createElement('article');
-            article.className = 'blog-card' + (index === 0 && post.featured ? ' featured-post' : '');
-            article.style.cursor = 'pointer';
-            article.onclick = () => window.location.href = `/blog/${post.id}`;
+            article.className = `blog-card` + (post.featured ? ' featured-post' : '');
             
-            if (index === 0 && post.featured) {
-                // Featured blog: grid layout with image on left, content on right
+            if (post.featured) {
+                // Featured post: grid layout with image on left, content on right
                 const imageDiv = document.createElement('div');
-                imageDiv.className = 'featured-image';
+                imageDiv.className = 'blog-image';
                 imageDiv.style.position = 'relative';
                 
                 if (post.image_url) {
@@ -830,57 +830,43 @@ class PortfolioApp {
                 
                 // Add badge on top of image
                 const badge = document.createElement('div');
-                badge.className = 'featured-badge';
+                badge.className = 'blog-featured-badge';
                 badge.textContent = 'Featured';
                 badge.style.position = 'absolute';
                 badge.style.top = '16px';
                 badge.style.left = '16px';
                 badge.style.zIndex = '10';
+                badge.style.width = 'fit-content';
+                badge.style.display = 'inline-block';
                 imageDiv.appendChild(badge);
                 article.appendChild(imageDiv);
                 
                 const contentDiv = document.createElement('div');
-                contentDiv.className = 'featured-content';
+                contentDiv.className = 'blog-content';
                 
                 const title = document.createElement('h3');
-                title.textContent = post.title;
+                const titleLink = document.createElement('a');
+                titleLink.href = `/blog/${post.id}`;
+                titleLink.textContent = post.title;
+                title.appendChild(titleLink);
                 contentDiv.appendChild(title);
                 
                 const excerpt = document.createElement('p');
-                excerpt.textContent = post.excerpt || post.content?.substring(0, 200) + '...' || '';
+                excerpt.textContent = post.excerpt || '';
                 contentDiv.appendChild(excerpt);
                 
-                const tagsDiv = document.createElement('div');
-                tagsDiv.style.display = 'flex';
-                tagsDiv.style.flexWrap = 'wrap';
-                tagsDiv.style.gap = '8px';
-                tagsDiv.style.marginBottom = '20px';
-                (post.tags || []).forEach(tag => {
-                    const tagSpan = document.createElement('span');
-                    tagSpan.className = 'tech-tag';
-                    tagSpan.textContent = tag;
-                    tagsDiv.appendChild(tagSpan);
-                });
-                contentDiv.appendChild(tagsDiv);
-                
                 const metaDiv = document.createElement('div');
-                metaDiv.style.display = 'flex';
-                metaDiv.style.gap = '20px';
-                metaDiv.style.fontSize = '14px';
-                metaDiv.style.color = 'var(--text-secondary)';
+                metaDiv.className = 'blog-meta';
                 
-                const dateSpan = document.createElement('span');
-                dateSpan.textContent = new Date(post.created_at).toLocaleDateString();
-                metaDiv.appendChild(dateSpan);
-                
-                const readSpan = document.createElement('span');
-                readSpan.textContent = (post.read_time || 5) + ' min read';
-                metaDiv.appendChild(readSpan);
+                const readTime = document.createElement('span');
+                readTime.className = 'read-time';
+                readTime.textContent = `${post.read_time || 5} min read`;
+                metaDiv.appendChild(readTime);
                 
                 contentDiv.appendChild(metaDiv);
                 article.appendChild(contentDiv);
             } else {
-                // Regular blog: card layout
+                // Regular post: card layout
                 const imageDiv = document.createElement('div');
                 imageDiv.className = 'blog-image';
                 if (post.image_url) {
@@ -896,31 +882,24 @@ class PortfolioApp {
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'blog-content';
                 
-                const category = document.createElement('div');
-                category.className = 'post-category';
-                category.textContent = (post.tags || [])[0] || 'General';
-                contentDiv.appendChild(category);
-                
                 const title = document.createElement('h3');
-                title.textContent = post.title;
+                const titleLink = document.createElement('a');
+                titleLink.href = `/blog/${post.id}`;
+                titleLink.textContent = post.title;
+                title.appendChild(titleLink);
                 contentDiv.appendChild(title);
                 
                 const excerpt = document.createElement('p');
-                excerpt.textContent = post.excerpt || post.content?.substring(0, 150) + '...' || '';
+                excerpt.textContent = post.excerpt || '';
                 contentDiv.appendChild(excerpt);
                 
                 const metaDiv = document.createElement('div');
-                metaDiv.className = 'post-meta';
+                metaDiv.className = 'blog-meta';
                 
-                const dateSpan = document.createElement('span');
-                dateSpan.className = 'post-date';
-                dateSpan.textContent = new Date(post.created_at).toLocaleDateString();
-                metaDiv.appendChild(dateSpan);
-                
-                const readSpan = document.createElement('span');
-                readSpan.className = 'read-time';
-                readSpan.textContent = (post.read_time || 5) + ' min read';
-                metaDiv.appendChild(readSpan);
+                const readTime = document.createElement('span');
+                readTime.className = 'read-time';
+                readTime.textContent = `${post.read_time || 5} min read`;
+                metaDiv.appendChild(readTime);
                 
                 contentDiv.appendChild(metaDiv);
                 article.appendChild(contentDiv);
@@ -929,19 +908,19 @@ class PortfolioApp {
             container.appendChild(article);
         });
         
-        // Always show "View All Blog Posts" button after the grid
-        const viewAllBtn = document.createElement('div');
-        viewAllBtn.style.textAlign = 'center';
-        viewAllBtn.style.marginTop = '40px';
+        // Always show "View All Posts" button after the grid
+        const viewAllWrapper = document.createElement('div');
+        viewAllWrapper.style.textAlign = 'center';
+        viewAllWrapper.style.marginTop = '40px';
         
         const btn = document.createElement('a');
-        btn.href = '/blogs';
+        btn.href = '/blog-list';
         btn.className = 'btn btn-primary';
-        btn.textContent = 'View All Blog Posts';
+        btn.textContent = 'View All Posts';
         btn.style.display = 'inline-block';
         
-        viewAllBtn.appendChild(btn);
-        container.parentElement.appendChild(viewAllBtn);
+        viewAllWrapper.appendChild(btn);
+        container.parentElement.appendChild(viewAllWrapper);
     }
 
     // Render skills
@@ -951,56 +930,38 @@ class PortfolioApp {
         const container = document.querySelector('.skills-grid');
         if (!container) return;
         
-        const visibleSkills = skills.filter(s => !s.hidden);
-        
-        // Clear container safely
         container.innerHTML = '';
         
-        visibleSkills.forEach(skill => {
-            const skillDiv = document.createElement('div');
-            skillDiv.className = 'skill-category';
+        skills.filter(skill => !skill.hidden).forEach(skill => {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'skill-category';
             
-            const title = document.createElement('h4');
-            title.textContent = skill.category;
-            skillDiv.appendChild(title);
+            const categoryTitle = document.createElement('h3');
+            categoryTitle.textContent = skill.category;
+            categoryDiv.appendChild(categoryTitle);
             
-            const tagsDiv = document.createElement('div');
-            tagsDiv.className = 'skill-tags';
-            (skill.skills || []).forEach(s => {
-                const span = document.createElement('span');
-                span.className = 'skill-tag';
-                span.textContent = s;
-                tagsDiv.appendChild(span);
+            const skillsList = document.createElement('div');
+            skillsList.className = 'skills-list';
+            
+            (skill.skills || []).forEach(skillItem => {
+                const skillDiv = document.createElement('div');
+                skillDiv.className = 'skill-item';
+                
+                const skillName = document.createElement('span');
+                skillName.className = 'skill-name';
+                skillName.textContent = skillItem;
+                skillDiv.appendChild(skillName);
+                
+                skillsList.appendChild(skillDiv);
             });
-            skillDiv.appendChild(tagsDiv);
             
-            container.appendChild(skillDiv);
+            categoryDiv.appendChild(skillsList);
+            container.appendChild(categoryDiv);
         });
-    }
-
-    // Reveal last name after animation delay
-    _scheduleLastNameReveal(lastName) {
-        const lastNameEl = document.getElementById('hero-name-lastname');
-        if (!lastNameEl) return;
-        // Use passed value, fall back to data attribute default (e.g. 'Acharya' from HTML)
-        const name = lastName || lastNameEl.dataset.lastname;
-        if (!name) return;
-        const letters = ['\u00A0', ...name.split('')];
-        let html = '';
-        letters.forEach(char => {
-            html += `<span class="name-letter" style="opacity:0;display:inline-block;transition:opacity 0.3s ease;">${char}</span>`;
-        });
-        setTimeout(() => {
-            lastNameEl.innerHTML = html;
-            lastNameEl.querySelectorAll('.name-letter').forEach((span, i) => {
-                setTimeout(() => { span.style.opacity = '1'; }, i * 80);
-            });
-        }, 1600);
     }
 
     // Apply settings from API
     applySettings(settings) {
-        // Update first name only - last name is revealed after animation via _scheduleLastNameReveal
         if (settings.hero_name) {
             const heroTitle = document.querySelector('.hero-name');
             if (heroTitle) {
@@ -1022,152 +983,70 @@ class PortfolioApp {
             }
         }
 
-        // Store last name on instance so _scheduleLastNameReveal can use it directly
         this._heroLastName = settings.hero_lastname || null;
-
         if (settings.hero_tagline) {
             const heroTagline = document.querySelector('.hero-tagline');
             if (heroTagline) heroTagline.textContent = settings.hero_tagline;
         }
-
         if (settings.hero_roles) {
-            this.typingRoles = settings.hero_roles
-                .split(',')
-                .map(role => role.trim())
-                .filter(Boolean);
+            this.typingRoles = settings.hero_roles;
         }
+        
+        // Update social links
+        this.updateSocialLinks(settings);
+    }
 
-        if (settings.hero_cv_url) {
-            const cvBtn = document.getElementById('hero-cv-btn');
-            if (cvBtn) {
-                const cvUrl = settings.hero_cv_url;
-                const fileName = cvUrl.split('/').pop() || 'CV.pdf';
-                cvBtn.href = cvUrl;
-                cvBtn.setAttribute('download', fileName);
-                // Force download via fetch+blob to bypass Content-Disposition
-                cvBtn.onclick = function(e) {
-                    e.preventDefault();
-                    fetch(cvUrl)
-                        .then(r => r.blob())
-                        .then(blob => {
-                            const blobUrl = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = blobUrl;
-                            a.download = fileName;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            URL.revokeObjectURL(blobUrl);
-                        })
-                        .catch(() => { window.open(cvUrl, '_blank'); });
-                };
+    updateSocialLinks(settings) {
+        const socialLinks = document.getElementById('social-links');
+        if (!socialLinks) return;
+
+        const socialConfig = [
+            { key: 'social_linkedin', label: 'LinkedIn', icon: 'M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z' },
+            { key: 'social_github', label: 'GitHub', icon: 'M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z' },
+            { key: 'social_youtube', label: 'YouTube', icon: 'M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z' },
+            { key: 'social_twitter', label: 'X (Twitter)', icon: 'M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z' },
+            { key: 'social_instagram', label: 'Instagram', icon: 'M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zM5.838 12a6.162 6.162 0 1 1 12.324 0 6.162 6.162 0 0 1-12.324 0zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm4.965-10.405a1.44 1.44 0 1 1 2.881.001 1.44 1.44 0 0 1-2.881-.001z' }
+        ];
+
+        let linksHtml = '';
+        socialConfig.forEach(social => {
+            const url = settings[social.key];
+            if (url && url !== '#') {
+                linksHtml += `
+                    <a href="${url}" target="_blank" class="social-link" aria-label="${social.label}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="${social.icon}"/>
+                        </svg>
+                    </a>
+                `;
             }
-        }
+        });
 
-        if (settings.hero_years_experience) {
-            const yearsNumber = document.getElementById('hero-years-number');
-            if (yearsNumber) yearsNumber.textContent = settings.hero_years_experience;
-        }
-
-        if (settings.hero_years_label) {
-            const yearsLabel = document.getElementById('hero-years-label');
-            if (yearsLabel) yearsLabel.textContent = settings.hero_years_label;
-        }
-
-        if (settings.hero_education_value) {
-            const eduValue = document.getElementById('hero-education-value');
-            if (eduValue) eduValue.textContent = settings.hero_education_value;
-        }
-
-        if (settings.hero_education_label) {
-            const eduLabel = document.getElementById('hero-education-label');
-            if (eduLabel) eduLabel.textContent = settings.hero_education_label;
-        }
-
-        if (settings.hero_location) {
-            const locationLabel = document.getElementById('hero-location-label');
-            if (locationLabel) locationLabel.textContent = settings.hero_location;
-        }
-
-        if (settings.about_paragraph_1) {
-            const p1 = document.getElementById('about-paragraph-1');
-            if (p1) p1.textContent = settings.about_paragraph_1;
-        }
-
-        if (settings.about_paragraph_2) {
-            const p2 = document.getElementById('about-paragraph-2');
-            if (p2) p2.textContent = settings.about_paragraph_2;
-        }
-
-        if (settings.about_paragraph_3) {
-            const p3 = document.getElementById('about-paragraph-3');
-            if (p3) p3.textContent = settings.about_paragraph_3;
-        }
-
-        if (settings.about_bio) {
-            const p1 = document.getElementById('about-paragraph-1');
-            if (p1) p1.textContent = settings.about_bio;
-        }
-
-        if (settings.about_image) {
-            const profileImage = document.querySelector('.profile-img');
-            if (profileImage) profileImage.src = settings.about_image;
-        }
-
-        // Update About section title
-        if (settings.about_title) {
-            const aboutTitle = document.querySelector('#about .section-title');
-            if (aboutTitle) aboutTitle.textContent = settings.about_title;
-        }
-
-        // Update About timeline nodes
-        const timelineNodes = document.querySelectorAll('.timeline-node');
-        if (timelineNodes.length >= 3) {
-            // Education node (first)
-            if (settings.about_edu_title) {
-                const eduH4 = timelineNodes[0].querySelector('h4');
-                if (eduH4) eduH4.textContent = settings.about_edu_title;
-            }
-            if (settings.about_edu_desc) {
-                const eduP = timelineNodes[0].querySelector('p');
-                if (eduP) eduP.textContent = settings.about_edu_desc;
-            }
-            if (settings.about_edu_sub) {
-                const eduSpan = timelineNodes[0].querySelector('span');
-                if (eduSpan) eduSpan.textContent = settings.about_edu_sub;
-            }
-
-            // Experience node (second)
-            if (settings.about_exp_title) {
-                const expH4 = timelineNodes[1].querySelector('h4');
-                if (expH4) expH4.textContent = settings.about_exp_title;
-            }
-            if (settings.about_exp_desc) {
-                const expP = timelineNodes[1].querySelector('p');
-                if (expP) expP.textContent = settings.about_exp_desc;
-            }
-            if (settings.about_exp_sub) {
-                const expSpan = timelineNodes[1].querySelector('span');
-                if (expSpan) expSpan.textContent = settings.about_exp_sub;
-            }
-
-            // Current node (third)
-            if (settings.about_current_title) {
-                const currentH4 = timelineNodes[2].querySelector('h4');
-                if (currentH4) currentH4.textContent = settings.about_current_title;
-            }
-            if (settings.about_current_desc) {
-                const currentP = timelineNodes[2].querySelector('p');
-                if (currentP) currentP.textContent = settings.about_current_desc;
-            }
-            if (settings.about_current_sub) {
-                const currentSpan = timelineNodes[2].querySelector('span');
-                if (currentSpan) currentSpan.textContent = settings.about_current_sub;
-            }
+        if (linksHtml) {
+            socialLinks.innerHTML = linksHtml;
         }
     }
 
-    // Setup contact form
+    // Store last name on instance so _scheduleLastNameReveal can use it directly
+    _scheduleLastNameReveal(lastName) {
+        const lastNameEl = document.getElementById('hero-name-lastname');
+        if (!lastNameEl) return;
+        const name = lastName || this._heroLastName;
+        if (!name) return;
+        const letters = ['\u00A0', ...name.split('')];
+        let html = '';
+        letters.forEach(char => {
+            html += `<span class="name-letter" style="opacity:0;display:inline-block;transition:opacity 0.3s ease;">${char}</span>`;
+        });
+        setTimeout(() => {
+            lastNameEl.innerHTML = html;
+            lastNameEl.querySelectorAll('.name-letter').forEach((span, i) => {
+                setTimeout(() => { span.style.opacity = '1'; }, i * 80);
+            });
+        }, 1600);
+    }
+
+    // Contact form
     setupContactForm() {
         const form = document.getElementById('contact-form');
         if (!form) return;
@@ -1176,47 +1055,30 @@ class PortfolioApp {
             e.preventDefault();
             
             const formData = new FormData(form);
-            const data = {
-                name: formData.get('name'),
-                email: formData.get('email'),
-                subject: formData.get('subject'),
-                message: formData.get('message')
-            };
+            const data = Object.fromEntries(formData);
             
             try {
-                const res = await fetch('/api/contact', {
+                const response = await fetch('/api/contact', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify(data)
                 });
                 
-                if (res.ok) {
+                if (response.ok) {
                     alert('Message sent successfully!');
                     form.reset();
                 } else {
-                    throw new Error('Failed to send');
+                    alert('Failed to send message. Please try again.');
                 }
-            } catch (err) {
-                alert('Error sending message. Please try again.');
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message. Please try again.');
             }
         });
     }
 }
 
-// Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new PortfolioApp();
-    
-    // Initialize Lucide icons
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-});
-
-// Service Worker for PWA functionality (optional)
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        // Uncomment when you have a service worker file
-        // navigator.serviceWorker.register('/sw.js');
-    });
-}
+// Initialize the portfolio app
+new PortfolioApp();
