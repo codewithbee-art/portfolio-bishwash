@@ -540,6 +540,10 @@
                     <i data-lucide="sparkles"></i>
                     Hero
                 </a>
+                <a href="#social" class="nav-item" data-section="social">
+                    <i data-lucide="share-2"></i>
+                    Social Media
+                </a>
                 <a href="#settings" class="nav-item" data-section="settings">
                     <i data-lucide="settings"></i>
                     Settings
@@ -762,6 +766,10 @@
                 dashboardView.style.display = 'none';
                 headerActions.style.display = 'none';
                 loadHeroEditor();
+            } else if (section === 'social') {
+                dashboardView.style.display = 'none';
+                headerActions.style.display = 'none';
+                loadSocialEditor();
             } else if (section === 'settings') {
                 dashboardView.style.display = 'none';
                 headerActions.style.display = 'none';
@@ -1670,6 +1678,93 @@
                 showToast('About settings saved!');
             } catch (err) {
                 showToast('Error saving about settings', 'error');
+            }
+        }
+
+        // Load social media editor
+        async function loadSocialEditor() {
+            try {
+                const res = await fetch('/api/content/settings');
+                const settings = await res.json();
+
+                renderCustomPanel('Social Media Settings', `
+                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 760px;">
+                        <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 600;">Manage Social Media Links</h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">Add your social media profile URLs. Only fill in the platforms you want to display on your website.</p>
+                        
+                        <div style="display: grid; gap: 20px;">
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
+                                <label style="font-size: 14px; font-weight: 500;">LinkedIn</label>
+                                <input type="url" id="social_linkedin" value="${settings.social_linkedin || ''}" placeholder="https://linkedin.com/in/yourprofile"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
+                                <label style="font-size: 14px; font-weight: 500;">GitHub</label>
+                                <input type="url" id="social_github" value="${settings.social_github || ''}" placeholder="https://github.com/yourusername"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
+                                <label style="font-size: 14px; font-weight: 500;">YouTube</label>
+                                <input type="url" id="social_youtube" value="${settings.social_youtube || ''}" placeholder="https://youtube.com/yourchannel"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
+                                <label style="font-size: 14px; font-weight: 500;">Twitter/X</label>
+                                <input type="url" id="social_twitter" value="${settings.social_twitter || ''}" placeholder="https://twitter.com/yourusername"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
+                                <label style="font-size: 14px; font-weight: 500;">Instagram</label>
+                                <input type="url" id="social_instagram" value="${settings.social_instagram || ''}" placeholder="https://instagram.com/yourusername"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            
+                            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border);">
+                                <button class="btn btn-primary" onclick="saveSocialEditor()">Save Social Media Links</button>
+                                <button class="btn btn-secondary" onclick="previewSocialLinks()" style="margin-left: 12px;">Preview on Website</button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+
+                // Add save function
+                window.saveSocialEditor = async () => {
+                    try {
+                        const socialLinks = [
+                            'social_linkedin', 'social_github', 'social_youtube', 
+                            'social_twitter', 'social_instagram'
+                        ];
+                        
+                        const savePairs = socialLinks.map(key => {
+                            const input = document.getElementById(key);
+                            return [key, input.value.trim()];
+                        });
+
+                        await Promise.all(savePairs.map(([key, value]) =>
+                            fetch(`/api/content/settings/${key}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ value: value || '' })
+                            })
+                        ));
+
+                        showToast('Social media links saved!');
+                    } catch (err) {
+                        showToast('Error saving social media links', 'error');
+                    }
+                };
+
+                // Add preview function
+                window.previewSocialLinks = () => {
+                    window.open('/', '_blank');
+                };
+
+            } catch (err) {
+                showToast('Error loading social media settings', 'error');
             }
         }
 
