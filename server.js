@@ -311,13 +311,18 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Fallback route for missing uploaded files
-app.get('/uploads/*', (req, res) => {
-    const filePath = req.path;
-    console.log('Missing uploaded file requested:', filePath);
+// Fallback for missing uploaded images
+app.use('/uploads/:filename', (req, res, next) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, 'uploads', filename);
     
-    // Serve a placeholder image for missing files
-    const placeholderPath = path.join(__dirname, 'assets', 'projects', 'placeholder.jpg');
+    // If file exists, serve it
+    if (fs.existsSync(filePath)) {
+        return next();
+    }
+    
+    // If file doesn't exist, serve placeholder
+    const placeholderPath = path.join(__dirname, 'assets', 'projects', 'placeholder.svg');
     if (fs.existsSync(placeholderPath)) {
         res.sendFile(placeholderPath);
     } else {
