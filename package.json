@@ -15,6 +15,7 @@
   "author": "Bishwash Acharya",
   "license": "MIT",
   "dependencies": {
+    "axios": "^1.13.6",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.3.1",
     "escape-html": "^1.0.3",

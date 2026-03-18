@@ -35,21 +35,22 @@ const authLimiter = rateLimit({
     skip: (req) => req.method !== 'POST' // Only rate limit POST requests
 });
 
-const contactLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10, // Limit each IP to 10 contact form submissions per hour
-    message: 'Too many contact submissions, please try again later',
-    standardHeaders: true,
-    legacyHeaders: false,
-    skip: (req) => req.method !== 'POST'
-});
+// Contact form - no rate limiting for portfolio (unlimited submissions)
+// const contactLimiter = rateLimit({
+//     windowMs: 60 * 60 * 1000, // 1 hour
+//     max: 50, // Limit each IP to 50 contact form submissions per hour (increased for testing)
+//     message: 'Too many contact submissions, please try again later',
+//     standardHeaders: true,
+//     legacyHeaders: false,
+//     skip: (req) => req.method !== 'POST'
+// });
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 API requests per 15 minutes
+    max: 1000, // Limit each IP to 1000 API requests per 15 minutes (very lenient)
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => req.method === 'GET' // Don't rate limit safe GET requests
+    skip: (req) => req.method === 'GET' || req.path.includes('/contact') // Skip GET requests and contact form
 });
 
 // File upload configuration
@@ -170,11 +171,11 @@ app.use('/api', csrfProtection);
 // Initialize database
 initialize();
 
-// Apply rate limiting to specific routes
+// Apply rate limiting to sensitive routes only
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/request-password-reset', authLimiter);
 app.use('/api/auth/reset-password', authLimiter);
-app.use('/api/contact', contactLimiter);
+// Contact form has no rate limiting - unlimited submissions for portfolio
 
 // Apply general API rate limiting
 app.use('/api', apiLimiter);

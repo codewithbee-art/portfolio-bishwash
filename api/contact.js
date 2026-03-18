@@ -4,7 +4,13 @@ const escapeHtml = require('escape-html');
 const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('../database/db');
+const EmailVerificationService = require('./email-verification');
+const DeviceProtection = require('./device-protection');
 const router = express.Router();
+
+// Initialize services
+const emailVerifier = new EmailVerificationService();
+const deviceProtection = new DeviceProtection();
 
 // Input validation constants
 const MAX_MESSAGE_LENGTH = 5000;
@@ -44,22 +50,104 @@ const escapeCsv = (value) => {
     return `"${safe}"`;
 };
 
+// Enhanced email validation
+function validateEmail(email) {
+    const disposableDomains = [
+        '10minutemail.com', 'tempmail.org', 'guerrillamail.com',
+        'mailinator.com', 'yopmail.com', 'temp-mail.org',
+        'throwaway.email', 'maildrop.cc', 'tempmail.de',
+        '10minutemail.co', 'temp-mail.org', 'yopmail.net',
+        'maildrop.cc', '20minutemail.com', 'guerrillamail.de'
+    ];
+    
+    const suspiciousPatterns = [
+        /^[a-z]{1,2}\d{3,}@/, // 1-2 letters + 3+ numbers@ (like ab123@)
+        /test123|demo123|fake123|sample123/i, // specific test patterns
+        /^test@|^demo@|^fake@|^sample@|^random@/i // exact suspicious usernames (noreply is allowed)
+    ];
+    
+    const domain = email.split('@')[1].toLowerCase();
+    
+    // Check for disposable email
+    if (disposableDomains.some(disposable => domain.includes(disposable))) {
+        return { valid: false, message: 'Please use a permanent email address (no disposable emails allowed)' };
+    }
+    
+    // Check for suspicious patterns (more specific now)
+    if (suspiciousPatterns.some(pattern => pattern.test(email))) {
+        return { valid: false, message: 'Please use a real email address' };
+    }
+    
+    return { valid: true };
+}
+
+// Test endpoint to verify server is running updated code
+router.get('/test', (req, res) => {
+    console.log('🔍 Test endpoint called - server is running updated code!');
+    res.json({ 
+        message: 'Contact API is working', 
+        timestamp: new Date().toISOString(),
+        validationEnabled: true
+    });
+});
+
 // Submit contact form (public)
 router.post('/', async (req, res) => {
     const { name, email, subject, message } = req.body;
+    
+    // Device protection check
+    const protectionResult = await deviceProtection.checkDevice(req);
+    
+    if (!protectionResult.allowed) {
+        if (protectionResult.action === 'block') {
+            return res.status(429).json({ 
+                error: protectionResult.message,
+                action: 'block',
+                retryAfter: protectionResult.retryAfter
+            });
+        }
+        
+        if (protectionResult.action === 'captcha') {
+            return res.status(429).json({ 
+                error: protectionResult.message,
+                action: 'captcha',
+                captchaRequired: true
+            });
+        }
+    }
     
     // Input validation
     if (!name || !email || !message) {
         return res.status(400).json({ error: 'Name, email, and message are required' });
     }
     
-    // Validate and sanitize inputs
+    // Basic validation
     if (typeof name !== 'string' || name.trim().length === 0 || name.length > MAX_NAME_LENGTH) {
         return res.status(400).json({ error: 'Name must be between 1 and ' + MAX_NAME_LENGTH + ' characters' });
     }
     
+    if (!email || typeof email !== 'string') {
+        return res.status(400).json({ error: 'Email is required' });
+    }
+    
     if (!validator.isEmail(email)) {
         return res.status(400).json({ error: 'Please provide a valid email address' });
+    }
+    
+    // Professional email verification
+    try {
+        const verificationResult = await emailVerifier.verifyEmail(email);
+        
+        if (!verificationResult.valid) {
+            return res.status(400).json({ 
+                error: 'Please use a real, permanent email address. Disposable or fake emails are not allowed.',
+                reason: verificationResult.reason,
+                method: verificationResult.method
+            });
+        }
+    } catch (error) {
+        console.error('Email verification service error:', error);
+        // Continue with basic validation if service fails
     }
     
     if (typeof message !== 'string' || message.trim().length === 0 || message.length > MAX_MESSAGE_LENGTH) {
@@ -115,7 +203,17 @@ router.post('/', async (req, res) => {
                 }
             }
             
-            res.json({ success: true, message: 'Message sent successfully' });
+            // Record successful submission for device protection
+            const fingerprint = deviceProtection.getDeviceFingerprint(req);
+            deviceProtection.recordSubmission(fingerprint);
+            
+            // Include warning info if applicable
+            const responseData = { success: true, message: 'Message sent successfully' };
+            if (protectionResult.action === 'warning') {
+                responseData.warning = protectionResult.message;
+            }
+            
+            res.json(responseData);
         }
     );
 });

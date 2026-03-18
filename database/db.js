@@ -11,7 +11,16 @@ if (!fs.existsSync(dbDir)) {
 const dbPath = path.join(dbDir, 'portfolio.db');
 console.log('Database path:', dbPath);
 console.log('Database exists:', fs.existsSync(dbPath));
-const db = new sqlite3.Database(dbPath);
+const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+        console.error('Error opening database:', err.message);
+    } else {
+        console.log('Connected to SQLite database.');
+        // Enable foreign keys and set UTF-8 encoding
+        db.run('PRAGMA foreign_keys = ON');
+        db.run('PRAGMA encoding = "UTF-8"');
+    }
+});
 
 const initialize = () => {
     db.serialize(() => {
@@ -108,7 +117,12 @@ const initialize = () => {
                     ['hero_name', 'Bishwash'],
                     ['hero_lastname', 'Acharya'],
                     ['hero_tagline', 'Building clean, clear, and genuinely useful digital experiences.'],
-                    ['hero_roles', 'Designer, Developer, Data/Business Analyst, Content Creator']
+                    ['hero_roles', 'Designer, Developer, Data/Business Analyst, Content Creator'],
+                    ['social_linkedin', '#'],
+                    ['social_github', '#'],
+                    ['social_youtube', '#'],
+                    ['social_twitter', '#'],
+                    ['social_instagram', '#']
                 ];
                 const stmt = db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)");
                 defaults.forEach(([key, value]) => stmt.run(key, value));

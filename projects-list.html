@@ -408,7 +408,7 @@
                 <a href="/#home" class="nav-link">Home</a>
                 <a href="/#about" class="nav-link">About</a>
                 <a href="/#experience" class="nav-link">Experience</a>
-                <a href="/#projects" class="nav-link active">Projects</a>
+                <a href="/projects" class="nav-link active">Projects</a>
                 <a href="/blogs" class="nav-link">Blog</a>
                 <a href="/#contact" class="nav-link">Contact</a>
                 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
@@ -506,6 +506,7 @@
         </div>
     </footer>
 
+    <script src="js/main.js"></script>
     <script>
         let allProjects = [];
         let currentFilter = 'all';
@@ -554,9 +555,13 @@
         // Load all projects
         async function loadAllProjects() {
             showSkeletons();
+            console.log('Loading projects...');
             try {
                 const response = await fetch('/api/content/projects');
+                console.log('Response status:', response.status);
                 allProjects = await response.json();
+                console.log('Projects loaded:', allProjects.length);
+                console.log('Sample project:', allProjects[0]);
                 buildFilterButtons();
                 applyFilters();
             } catch (error) {
@@ -701,9 +706,12 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded - starting projects initialization');
             lucide.createIcons();
             const app = new PortfolioApp();
+            console.log('PortfolioApp created for projects');
             loadAllProjects();
+            console.log('loadAllProjects called');
             initBackToSiteBtn();
 
             // Real-time search
@@ -719,6 +727,5 @@
             });
         });
     </script>
-    <script src="js/main.js"></script>
 </body>
 </html>

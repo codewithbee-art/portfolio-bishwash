@@ -1007,46 +1007,20 @@ class PortfolioApp {
             const heroTitle = document.querySelector('.hero-name');
             if (heroTitle) {
                 const lastNameEl = document.getElementById('hero-name-lastname');
-                const firstName = settings.hero_name.trim();
+                // Update existing spans with actual letters from database
+                const existingSpans = heroTitle.querySelectorAll(':scope > .name-letter');
+                const firstName = settings.hero_name.trim().split('');
                 
-                // Check if the text contains Unicode characters (like Nepali)
-                const hasUnicode = /[^\x00-\x7F]/.test(firstName);
-                
-                if (hasUnicode) {
-                    // For Unicode text, don't split into individual characters
-                    // Instead, replace the first span with the complete name and hide others
-                    const existingSpans = heroTitle.querySelectorAll(':scope > .name-letter');
-                    existingSpans.forEach((span, i) => {
-                        if (i === 0) {
-                            span.textContent = firstName;
-                            span.style.opacity = '0';
-                            span.style.display = 'inline-block';
-                            span.style.transition = 'opacity 0.3s ease';
-                            // Animate the complete name at once
-                            setTimeout(() => { span.style.opacity = '1'; }, 200);
-                        } else {
-                            // Hide remaining spans
-                            span.style.display = 'none';
-                        }
-                    });
-                } else {
-                    // For English text, use the original character-by-character animation
-                    const existingSpans = heroTitle.querySelectorAll(':scope > .name-letter');
-                    const firstNameChars = Array.from(firstName);
-                    
-                    existingSpans.forEach((span, i) => {
-                        if (firstNameChars[i]) {
-                            span.textContent = firstNameChars[i];
-                            span.style.opacity = '0';
-                            span.style.display = 'inline-block';
-                            span.style.transition = 'opacity 0.3s ease';
-                            // Animate in with delay
-                            setTimeout(() => { span.style.opacity = '1'; }, i * 80);
-                        } else {
-                            span.style.display = 'none';
-                        }
-                    });
-                }
+                existingSpans.forEach((span, i) => {
+                    if (firstName[i]) {
+                        span.textContent = firstName[i] === ' ' ? '\u00A0' : firstName[i];
+                        span.style.opacity = '0';
+                        span.style.display = 'inline-block';
+                        span.style.transition = 'opacity 0.3s ease';
+                        // Animate in with delay
+                        setTimeout(() => { span.style.opacity = '1'; }, i * 80);
+                    }
+                });
             }
         }
 
@@ -1056,12 +1030,7 @@ class PortfolioApp {
             if (heroTagline) heroTagline.textContent = settings.hero_tagline;
         }
         if (settings.hero_roles) {
-            // Handle both string and array formats
-            if (typeof settings.hero_roles === 'string') {
-                this.typingRoles = settings.hero_roles.split(',').map(role => role.trim());
-            } else {
-                this.typingRoles = settings.hero_roles;
-            }
+            this.typingRoles = settings.hero_roles;
         }
         
         // Update social links
@@ -1117,6 +1086,54 @@ class PortfolioApp {
             });
         }, 1600);
     }
+}
+// Initialize the portfolio app
+new PortfolioApp();
+        const timelineNodes = document.querySelectorAll('.timeline-node');
+        if (timelineNodes.length >= 3) {
+            // Education node (first)
+            if (settings.about_edu_title) {
+                const eduH4 = timelineNodes[0].querySelector('h4');
+                if (eduH4) eduH4.textContent = settings.about_edu_title;
+            }
+            if (settings.about_edu_desc) {
+                const eduP = timelineNodes[0].querySelector('p');
+                if (eduP) eduP.textContent = settings.about_edu_desc;
+            }
+            if (settings.about_edu_sub) {
+                const eduSpan = timelineNodes[0].querySelector('span');
+                if (eduSpan) eduSpan.textContent = settings.about_edu_sub;
+            }
+
+            // Experience node (second)
+            if (settings.about_exp_title) {
+                const expH4 = timelineNodes[1].querySelector('h4');
+                if (expH4) expH4.textContent = settings.about_exp_title;
+            }
+            if (settings.about_exp_desc) {
+                const expP = timelineNodes[1].querySelector('p');
+                if (expP) expP.textContent = settings.about_exp_desc;
+            }
+            if (settings.about_exp_sub) {
+                const expSpan = timelineNodes[1].querySelector('span');
+                if (expSpan) expSpan.textContent = settings.about_exp_sub;
+            }
+
+            // Current node (third)
+            if (settings.about_current_title) {
+                const currentH4 = timelineNodes[2].querySelector('h4');
+                if (currentH4) currentH4.textContent = settings.about_current_title;
+            }
+            if (settings.about_current_desc) {
+                const currentP = timelineNodes[2].querySelector('p');
+                if (currentP) currentP.textContent = settings.about_current_desc;
+            }
+            if (settings.about_current_sub) {
+                const currentSpan = timelineNodes[2].querySelector('span');
+                if (currentSpan) currentSpan.textContent = settings.about_current_sub;
+            }
+        }
+    }
 
     // Setup contact form
     setupContactForm() {
@@ -1134,94 +1151,40 @@ class PortfolioApp {
                 message: formData.get('message')
             };
             
-            // Show loading state
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span>Sending...</span>';
-            submitBtn.disabled = true;
-            
             try {
-                const response = await fetch('/api/contact', {
+                const res = await fetch('/api/contact', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
                 
-                // Handle non-JSON responses (like rate limiting)
-                let result;
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    result = await response.json();
-                } else {
-                    const text = await response.text();
-                    result = { error: text || 'Unknown error' };
-                }
-                
-                if (response.ok) {
-                    // Success
+                if (res.ok) {
+                    alert('Message sent successfully!');
                     form.reset();
-                    
-                    // Check if popup functions are available
-                    if (typeof showSuccess === 'function') {
-                        // Add a small delay to ensure popup is ready
-                        setTimeout(() => {
-                            showSuccess('Message Sent! 🎉', 'Your message has been sent successfully. I\'ll get back to you as soon as possible.');
-                        }, 100);
-                    } else {
-                        alert('Message sent successfully! I\'ll get back to you soon.');
-                    }
-                    
-                    // Show warning if present
-                    if (result.warning) {
-                        setTimeout(() => {
-                            showInfo('⚠️ Quick Submissions', result.warning);
-                        }, 2000);
-                    }
                 } else {
-                    // Error from server
-                    const errorMessage = result.error || 'Failed to send message';
-                    
-                    // Handle different protection actions
-                    if (result.action === 'captcha') {
-                        showError('🔐 Verification Required', 'Please complete the CAPTCHA to continue. This helps prevent spam.');
-                    } else if (result.action === 'block') {
-                        const retryMinutes = Math.ceil(result.retryAfter / 60);
-                        showError('🚫 Temporarily Blocked', `Too many messages detected. Please try again in ${retryMinutes} minutes.`);
-                    } else if (errorMessage.includes('email address') || errorMessage.includes('disposable')) {
-                        if (typeof showError === 'function') {
-                            showError('Invalid Email 🚫', errorMessage);
-                        } else {
-                            alert('Invalid Email: ' + errorMessage);
-                        }
-                    } else {
-                        if (typeof showError === 'function') {
-                            showError('Send Failed', errorMessage);
-                        } else {
-                            alert('Error: ' + errorMessage);
-                        }
-                    }
+                    throw new Error('Failed to send');
                 }
-            } catch (error) {
-                if (typeof showError === 'function') {
-                    showError('Connection Error', 'Failed to send message. Please check your internet connection and try again.');
-                } else {
-                    alert('Connection Error: Failed to send message. Please try again.');
-                }
-            } finally {
-                // Reset button
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+            } catch (err) {
+                alert('Error sending message. Please try again.');
             }
         });
     }
 }
 
-// Initialize Lucide icons
-if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
-}
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    new PortfolioApp();
+    
+    // Initialize Lucide icons
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+});
 
-// Initialize the portfolio app
-new PortfolioApp();
+// Service Worker for PWA functionality (optional)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // Uncomment when you have a service worker file
+        // navigator.serviceWorker.register('/sw.js');
+    });
+}

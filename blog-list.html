@@ -374,7 +374,7 @@
                 <a href="/#home" class="nav-link">Home</a>
                 <a href="/#about" class="nav-link">About</a>
                 <a href="/#experience" class="nav-link">Experience</a>
-                <a href="/#projects" class="nav-link">Projects</a>
+                <a href="/projects" class="nav-link">Projects</a>
                 <a href="/blogs" class="nav-link active">Blog</a>
                 <a href="/#contact" class="nav-link">Contact</a>
                 <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
@@ -499,9 +499,13 @@
         // Load all blog posts
         async function loadAllBlogs() {
             showBlogSkeletons();
+            console.log('Loading blogs...');
             try {
                 const res = await fetch('/api/content/blog');
+                console.log('Response status:', res.status);
                 const posts = await res.json();
+                console.log('Blogs loaded:', posts.length);
+                console.log('Sample blog:', posts[0]);
                 
                 allBlogPosts = posts.filter(p => p.published && !p.hidden);
                 
@@ -671,22 +675,25 @@
                 } else {
                     btn.classList.remove('visible');
                 }
-            }, { passive: true });
+            });
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded - starting initialization');
             lucide.createIcons();
             const app = new PortfolioApp();
+            console.log('PortfolioApp created');
             loadAllBlogs();
+            console.log('loadAllBlogs called');
             initBackToSiteBtn();
+        });
 
-            // Real-time search
-            const searchInput = document.getElementById('blog-search-input');
-            searchInput.addEventListener('input', (e) => {
-                currentSearch = e.target.value;
-                applyFilters();
-            });
+        // Real-time search
+        const searchInput = document.getElementById('blog-search-input');
+        searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            applyFilters();
         });
     </script>
 </body>
