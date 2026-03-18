@@ -97,15 +97,26 @@ router.post('/', async (req, res) => {
         const { name, email, subject, message } = req.body;
         
         // Debug logging for production (can be removed later)
-        console.log('Contact submission:', { 
+        console.log('Contact submission received:', { 
             name: name?.substring(0, 20), 
             email: email?.substring(0, 20), 
             hasSubject: !!subject, 
-            messageLength: message?.length 
+            messageLength: message?.length,
+            bodyKeys: Object.keys(req.body)
         });
+        
+        // Check if request body exists
+        if (!req.body || Object.keys(req.body).length === 0) {
+            console.log('❌ Empty request body');
+            return res.status(400).json({ 
+                error: 'Request body is empty',
+                details: 'Please ensure you are sending JSON data'
+            });
+        }
         
         // Input validation
         if (!name || !email || !message) {
+            console.log('❌ Missing required fields:', { name: !!name, email: !!email, message: !!message });
             return res.status(400).json({ 
                 error: 'Name, email, and message are required',
                 details: { name: !!name, email: !!email, message: !!message }

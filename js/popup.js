@@ -70,9 +70,13 @@ class PopupManager {
             autoClose = null
         } = options;
 
+        // Ensure popup exists and is initialized
+        this.createPopupContainer();
+        this.init();
+        
         // Set content first
-        this.title.textContent = title;
-        this.message.textContent = message;
+        if (this.title) this.title.textContent = title;
+        if (this.message) this.message.textContent = message;
         
         // Set icon and type
         this.setIcon(type, icon);
@@ -81,8 +85,10 @@ class PopupManager {
         this.setButtons(buttons);
         
         // Show popup
-        this.overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
+        if (this.overlay) {
+            this.overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
         
         // Auto close if specified
         if (autoClose) {
