@@ -34,12 +34,17 @@ class PopupManager {
 
     init() {
         this.overlay = document.getElementById('popup-overlay');
+        if (!this.overlay) {
+            console.error('Popup overlay not found');
+            return;
+        }
+        
         this.modal = this.overlay.querySelector('.popup-modal');
         this.icon = this.overlay.querySelector('.popup-icon i');
         this.title = this.overlay.querySelector('.popup-title');
         this.message = this.overlay.querySelector('.popup-message');
         this.buttonsContainer = this.overlay.querySelector('.popup-buttons');
-
+        
         // Close on overlay click
         this.overlay.addEventListener('click', (e) => {
             if (e.target === this.overlay) {
@@ -65,7 +70,7 @@ class PopupManager {
             autoClose = null
         } = options;
 
-        // Set content
+        // Set content first
         this.title.textContent = title;
         this.message.textContent = message;
         
@@ -91,10 +96,10 @@ class PopupManager {
 
     setIcon(type, iconName) {
         const iconElement = this.icon;
-        const iconContainer = this.icon.parentElement;
+        const iconContainer = iconElement ? iconElement.parentElement : null;
         
         if (!iconElement || !iconContainer) {
-            console.warn('Popup icon elements not found');
+            console.warn('Popup icon elements not found, using fallback');
             return;
         }
         
