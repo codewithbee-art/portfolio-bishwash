@@ -93,129 +93,146 @@ router.get('/test', (req, res) => {
 
 // Submit contact form (public)
 router.post('/', async (req, res) => {
-    const { name, email, subject, message } = req.body;
-    
-    // Device protection check
-    const protectionResult = await deviceProtection.checkDevice(req);
-    
-    if (!protectionResult.allowed) {
-        if (protectionResult.action === 'block') {
-            return res.status(429).json({ 
-                error: protectionResult.message,
-                action: 'block',
-                retryAfter: protectionResult.retryAfter
-            });
-        }
-        
-        if (protectionResult.action === 'captcha') {
-            return res.status(429).json({ 
-                error: protectionResult.message,
-                action: 'captcha',
-                captchaRequired: true
-            });
-        }
-    }
-    
-    // Input validation
-    if (!name || !email || !message) {
-        return res.status(400).json({ error: 'Name, email, and message are required' });
-    }
-    
-    // Basic validation
-    if (typeof name !== 'string' || name.trim().length === 0 || name.length > MAX_NAME_LENGTH) {
-        return res.status(400).json({ error: 'Name must be between 1 and ' + MAX_NAME_LENGTH + ' characters' });
-    }
-    
-    if (!email || typeof email !== 'string') {
-        return res.status(400).json({ error: 'Email is required' });
-    }
-    
-    if (!validator.isEmail(email)) {
-        return res.status(400).json({ error: 'Please provide a valid email address' });
-    }
-    
-    // Professional email verification
     try {
-        const verificationResult = await emailVerifier.verifyEmail(email);
+        const { name, email, subject, message } = req.body;
         
-        if (!verificationResult.valid) {
+        // Debug logging for production (can be removed later)
+        console.log('Contact submission:', { 
+            name: name?.substring(0, 20), 
+            email: email?.substring(0, 20), 
+            hasSubject: !!subject, 
+            messageLength: message?.length 
+        });
+        
+        // Input validation
+        if (!name || !email || !message) {
             return res.status(400).json({ 
-                error: 'Please use a real, permanent email address. Disposable or fake emails are not allowed.',
-                reason: verificationResult.reason,
-                method: verificationResult.method
+                error: 'Name, email, and message are required',
+                details: { name: !!name, email: !!email, message: !!message }
             });
         }
-    } catch (error) {
-        console.error('Email verification service error:', error);
-        // Continue with basic validation if service fails
-    }
-    
-    if (typeof message !== 'string' || message.trim().length === 0 || message.length > MAX_MESSAGE_LENGTH) {
-        return res.status(400).json({ error: 'Message must be between 1 and ' + MAX_MESSAGE_LENGTH + ' characters' });
-    }
-    
-    if (subject && (typeof subject !== 'string' || subject.length > MAX_SUBJECT_LENGTH)) {
-        return res.status(400).json({ error: 'Subject must be less than ' + MAX_SUBJECT_LENGTH + ' characters' });
-    }
-    
-    // Trim inputs
-    const trimmedName = name.trim();
-    const trimmedEmail = email.trim().toLowerCase();
-    const trimmedSubject = (subject || '').trim();
-    const trimmedMessage = message.trim();
-    
-    const id = uuidv4();
-    
-    // Save to database
-    db.run(
-        'INSERT INTO messages (id, name, email, subject, message) VALUES (?, ?, ?, ?, ?)',
-        [id, trimmedName, trimmedEmail, trimmedSubject, trimmedMessage],
-        async function(err) {
-            if (err) {
-                console.error('Database error:', err);
-                return res.status(500).json({ error: 'Failed to save message' });
+        
+        // Device protection check
+        const protectionResult = await deviceProtection.checkDevice(req);
+        
+        if (!protectionResult.allowed) {
+            if (protectionResult.action === 'block') {
+                return res.status(429).json({ 
+                    error: protectionResult.message,
+                    action: 'block',
+                    retryAfter: protectionResult.retryAfter
+                });
             }
             
-            // Send email notification if SMTP is configured
-            const mailer = await getTransporter();
-            const smtp = await getSmtpConfig();
-            if (mailer && smtp) {
-                try {
-                    const appBaseUrl = process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
-                    await mailer.sendMail({
-                        from: smtp.user,
-                        to: smtp.user,
-                        subject: `Portfolio Contact: ${escapeHtml(trimmedSubject || 'New message')}`,
-                        html: `
-                            <h3>New Contact Form Submission</h3>
-                            <p><strong>Name:</strong> ${escapeHtml(trimmedName)}</p>
-                            <p><strong>Email:</strong> ${escapeHtml(trimmedEmail)}</p>
-                            <p><strong>Subject:</strong> ${escapeHtml(trimmedSubject || 'N/A')}</p>
-                            <p><strong>Message:</strong></p>
-                            <p>${escapeHtml(trimmedMessage).replace(/\n/g, '<br>')}</p>
-                            <hr>
-                            <p>View in admin panel: <a href="${appBaseUrl}/admin/dashboard">Open Dashboard</a></p>
-                        `
+            if (protectionResult.action === 'captcha') {
+                return res.status(429).json({ 
+                    error: protectionResult.message,
+                    action: 'captcha',
+                    captchaRequired: true
+                });
+            }
+        }
+        
+        // Basic validation
+        if (typeof name !== 'string' || name.trim().length === 0 || name.length > MAX_NAME_LENGTH) {
+            return res.status(400).json({ error: 'Name must be between 1 and ' + MAX_NAME_LENGTH + ' characters' });
+        }
+        
+        if (!email || typeof email !== 'string') {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+        
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ error: 'Please provide a valid email address' });
+        }
+        
+        // Professional email verification
+        try {
+            const verificationResult = await emailVerifier.verifyEmail(email);
+            
+            if (!verificationResult.valid) {
+                return res.status(400).json({ 
+                    error: 'Please use a real, permanent email address. Disposable or fake emails are not allowed.',
+                    reason: verificationResult.reason,
+                    method: verificationResult.method
+                });
+            }
+        } catch (error) {
+            console.error('Email verification service error:', error);
+            // Continue with basic validation if service fails
+        }
+        
+        if (typeof message !== 'string' || message.trim().length === 0 || message.length > MAX_MESSAGE_LENGTH) {
+            return res.status(400).json({ error: 'Message must be between 1 and ' + MAX_MESSAGE_LENGTH + ' characters' });
+        }
+        
+        if (subject && (typeof subject !== 'string' || subject.length > MAX_SUBJECT_LENGTH)) {
+            return res.status(400).json({ error: 'Subject must be less than ' + MAX_SUBJECT_LENGTH + ' characters' });
+        }
+        
+        // Trim inputs
+        const trimmedName = name.trim();
+        const trimmedEmail = email.toLowerCase().trim();
+        const trimmedSubject = subject ? subject.trim() : '';
+        const trimmedMessage = message.trim();
+        
+        // Generate unique ID
+        const messageId = uuidv4();
+        
+        // Save to database
+        db.run(
+            `INSERT INTO messages (id, name, email, subject, message, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+            [messageId, trimmedName, trimmedEmail, trimmedSubject, trimmedMessage, new Date().toISOString()],
+            function(err) {
+                if (err) {
+                    console.error('Database error:', err);
+                    return res.status(500).json({ error: 'Failed to save message' });
+                }
+                
+                // Send email notification if SMTP is configured
+                getTransporter().then(mailer => {
+                    return getSmtpConfig().then(smtp => {
+                        if (mailer && smtp) {
+                            return mailer.sendMail({
+                                from: `"${trimmedName}" <${smtp.user}>`,
+                                to: smtp.user,
+                                replyTo: trimmedEmail,
+                                subject: `New Contact: ${trimmedSubject || 'No Subject'}`,
+                                html: `
+                                    <h2>New Contact Form Submission</h2>
+                                    <p><strong>From:</strong> ${trimmedName} (${trimmedEmail})</p>
+                                    <p><strong>Subject:</strong> ${trimmedSubject || 'No Subject'}</p>
+                                    <p><strong>Message:</strong></p>
+                                    <p>${escapeHtml(trimmedMessage).replace(/\n/g, '<br>')}</p>
+                                    <hr>
+                                    <p>View in admin panel: <a href="${process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`}/admin/dashboard">Open Dashboard</a></p>
+                                `
+                            });
+                        }
                     });
-                } catch (emailErr) {
+                }).catch(emailErr => {
                     console.error('Email error:', emailErr);
                     // Don't fail the request if email fails
-                }
+                }).then(() => {
+                    // Record successful submission for device protection
+                    const fingerprint = deviceProtection.getDeviceFingerprint(req);
+                    deviceProtection.recordSubmission(fingerprint);
+                    
+                    // Include warning info if applicable
+                    const responseData = { success: true, message: 'Message sent successfully' };
+                    if (protectionResult.action === 'warning') {
+                        responseData.warning = protectionResult.message;
+                    }
+                    
+                    res.json(responseData);
+                });
             }
-            
-            // Record successful submission for device protection
-            const fingerprint = deviceProtection.getDeviceFingerprint(req);
-            deviceProtection.recordSubmission(fingerprint);
-            
-            // Include warning info if applicable
-            const responseData = { success: true, message: 'Message sent successfully' };
-            if (protectionResult.action === 'warning') {
-                responseData.warning = protectionResult.message;
-            }
-            
-            res.json(responseData);
-        }
-    );
+        );
+        
+    } catch (error) {
+        console.error('Contact form error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // Get all messages (admin only)

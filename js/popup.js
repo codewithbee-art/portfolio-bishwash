@@ -101,9 +101,21 @@ class PopupManager {
         iconContainer.classList.add(type);
         
         // Set icon
-        if (iconName && typeof lucide !== 'undefined') {
+        if (iconName && typeof lucide !== 'undefined' && iconName !== '') {
             iconElement.setAttribute('data-lucide', iconName);
             lucide.createIcons();
+        } else {
+            // Use default icons based on type
+            const defaultIcons = {
+                success: 'check-circle',
+                error: 'x-circle', 
+                info: 'info'
+            };
+            const defaultIcon = defaultIcons[type] || 'info';
+            iconElement.setAttribute('data-lucide', defaultIcon);
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         }
     }
 
