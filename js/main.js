@@ -789,55 +789,37 @@ class PortfolioApp {
 
     // Render blog posts
     renderBlog(posts) {
-        console.log('renderBlog called with posts:', posts);
-        
-        if (!posts || posts.length === 0) {
-            console.log('No posts to render');
-            return;
-        }
+        if (!posts || posts.length === 0) return;
         
         const container = document.querySelector('.blog-grid');
-        if (!container) {
-            console.log('Blog grid container not found');
-            return;
-        }
+        if (!container) return;
         
         const publishedPosts = posts.filter(p => p.published && !p.hidden);
-        console.log('Published posts:', publishedPosts.length);
-        
-        if (publishedPosts.length === 0) {
-            console.log('No published posts found');
-            return;
-        }
+        if (publishedPosts.length === 0) return;
         
         // Separate featured and non-featured posts
         const featuredPost = publishedPosts.find(p => p.featured);
         const otherPosts = publishedPosts.filter(p => !p.featured);
-        
-        console.log('Featured post:', featuredPost ? 'Yes' : 'No');
-        console.log('Other posts:', otherPosts.length);
         
         // Show max 1 featured + 3 other posts on homepage
         const displayPosts = [];
         if (featuredPost) displayPosts.push(featuredPost);
         displayPosts.push(...otherPosts.slice(0, 3));
         
-        console.log('Total posts to display:', displayPosts.length);
-        
         // Clear container safely
         container.innerHTML = '';
         
         displayPosts.forEach((post, index) => {
-            console.log(`Rendering post ${index + 1}:`, post.title, 'featured:', post.featured);
-            
             const article = document.createElement('article');
-            article.className = `blog-card` + (post.featured ? ' featured-post' : '');
-            console.log('Article classes:', article.className);
+            article.className = 'blog-card' + (index === 0 && post.featured ? ' featured-post' : '');
+            article.style.cursor = 'pointer';
+            article.onclick = () => window.location.href = `/blog/${post.id}`;
             
-            if (post.featured) {
-                // Featured post: grid layout with image on left, content on right
+            if (index === 0 && post.featured) {
+                // Featured blog: grid layout with image on left, content on right
                 const imageDiv = document.createElement('div');
-                imageDiv.className = 'featured-post-image';
+                imageDiv.className = 'featured-image';
+                imageDiv.style.position = 'relative';
                 
                 if (post.image_url) {
                     const img = document.createElement('img');
@@ -856,45 +838,51 @@ class PortfolioApp {
                 badge.style.top = '16px';
                 badge.style.left = '16px';
                 badge.style.zIndex = '10';
-                badge.style.width = 'fit-content';
-                badge.style.display = 'inline-block';
                 imageDiv.appendChild(badge);
                 article.appendChild(imageDiv);
                 
                 const contentDiv = document.createElement('div');
-                contentDiv.className = 'featured-post-content';
-                
-                // Add category tag
-                if (post.tags && post.tags.length > 0) {
-                    const categoryDiv = document.createElement('div');
-                    categoryDiv.className = 'post-category';
-                    categoryDiv.textContent = post.tags[0];
-                    contentDiv.appendChild(categoryDiv);
-                }
+                contentDiv.className = 'featured-content';
                 
                 const title = document.createElement('h3');
-                const titleLink = document.createElement('a');
-                titleLink.href = `/blog/${post.id}`;
-                titleLink.textContent = post.title;
-                title.appendChild(titleLink);
+                title.textContent = post.title;
                 contentDiv.appendChild(title);
                 
                 const excerpt = document.createElement('p');
-                excerpt.textContent = post.excerpt || '';
+                excerpt.textContent = post.excerpt || post.content?.substring(0, 200) + '...' || '';
                 contentDiv.appendChild(excerpt);
                 
-                const metaDiv = document.createElement('div');
-                metaDiv.className = 'post-meta';
+                const tagsDiv = document.createElement('div');
+                tagsDiv.style.display = 'flex';
+                tagsDiv.style.flexWrap = 'wrap';
+                tagsDiv.style.gap = '8px';
+                tagsDiv.style.marginBottom = '20px';
+                (post.tags || []).forEach(tag => {
+                    const tagSpan = document.createElement('span');
+                    tagSpan.className = 'tech-tag';
+                    tagSpan.textContent = tag;
+                    tagsDiv.appendChild(tagSpan);
+                });
+                contentDiv.appendChild(tagsDiv);
                 
-                const readTime = document.createElement('span');
-                readTime.className = 'read-time';
-                readTime.textContent = `${post.read_time || 5} min read`;
-                metaDiv.appendChild(readTime);
+                const metaDiv = document.createElement('div');
+                metaDiv.style.display = 'flex';
+                metaDiv.style.gap = '20px';
+                metaDiv.style.fontSize = '14px';
+                metaDiv.style.color = 'var(--text-secondary)';
+                
+                const dateSpan = document.createElement('span');
+                dateSpan.textContent = new Date(post.created_at).toLocaleDateString();
+                metaDiv.appendChild(dateSpan);
+                
+                const readSpan = document.createElement('span');
+                readSpan.textContent = (post.read_time || 5) + ' min read';
+                metaDiv.appendChild(readSpan);
                 
                 contentDiv.appendChild(metaDiv);
                 article.appendChild(contentDiv);
             } else {
-                // Regular post: card layout
+                // Regular blog: card layout
                 const imageDiv = document.createElement('div');
                 imageDiv.className = 'blog-image';
                 if (post.image_url) {
@@ -910,72 +898,31 @@ class PortfolioApp {
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'blog-content';
                 
-                // Add category tag
-                if (post.tags && post.tags.length > 0) {
-                    const categoryDiv = document.createElement('div');
-                    categoryDiv.className = 'post-category';
-                    categoryDiv.textContent = post.tags[0];
-                    contentDiv.appendChild(categoryDiv);
-                }
+                const category = document.createElement('div');
+                category.className = 'post-category';
+                category.textContent = (post.tags || [])[0] || 'General';
+                contentDiv.appendChild(category);
                 
                 const title = document.createElement('h3');
-                const titleLink = document.createElement('a');
-                titleLink.href = `/blog/${post.id}`;
-                titleLink.textContent = post.title;
-                title.appendChild(titleLink);
+                title.textContent = post.title;
                 contentDiv.appendChild(title);
                 
                 const excerpt = document.createElement('p');
-                excerpt.textContent = post.excerpt || '';
+                excerpt.textContent = post.excerpt || post.content?.substring(0, 150) + '...' || '';
                 contentDiv.appendChild(excerpt);
                 
                 const metaDiv = document.createElement('div');
                 metaDiv.className = 'post-meta';
                 
-                const readTime = document.createElement('span');
-                readTime.className = 'read-time';
-                readTime.textContent = `${post.read_time || 5} min read`;
-                metaDiv.appendChild(readTime);
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'post-date';
+                dateSpan.textContent = new Date(post.created_at).toLocaleDateString();
+                metaDiv.appendChild(dateSpan);
                 
-                contentDiv.appendChild(metaDiv);
-                article.appendChild(contentDiv);
-            }
-            
-            if (!post.featured) {
-                // Regular post: card layout
-                const imageDiv = document.createElement('div');
-                imageDiv.className = 'blog-image';
-                if (post.image_url) {
-                    const img = document.createElement('img');
-                    img.src = post.image_url;
-                    img.alt = post.title;
-                    img.loading = 'lazy';
-                    img.onerror = function() { this.src = 'assets/blog/placeholder.jpg'; };
-                    imageDiv.appendChild(img);
-                }
-                article.appendChild(imageDiv);
-                
-                const contentDiv = document.createElement('div');
-                contentDiv.className = 'blog-content';
-                
-                const title = document.createElement('h3');
-                const titleLink = document.createElement('a');
-                titleLink.href = `/blog/${post.id}`;
-                titleLink.textContent = post.title;
-                title.appendChild(titleLink);
-                contentDiv.appendChild(title);
-                
-                const excerpt = document.createElement('p');
-                excerpt.textContent = post.excerpt || '';
-                contentDiv.appendChild(excerpt);
-                
-                const metaDiv = document.createElement('div');
-                metaDiv.className = 'blog-meta';
-                
-                const readTime = document.createElement('span');
-                readTime.className = 'read-time';
-                readTime.textContent = `${post.read_time || 5} min read`;
-                metaDiv.appendChild(readTime);
+                const readSpan = document.createElement('span');
+                readSpan.className = 'read-time';
+                readSpan.textContent = (post.read_time || 5) + ' min read';
+                metaDiv.appendChild(readSpan);
                 
                 contentDiv.appendChild(metaDiv);
                 article.appendChild(contentDiv);
@@ -984,19 +931,19 @@ class PortfolioApp {
             container.appendChild(article);
         });
         
-        // Always show "View All Posts" button after the grid
-        const viewAllWrapper = document.createElement('div');
-        viewAllWrapper.style.textAlign = 'center';
-        viewAllWrapper.style.marginTop = '40px';
+        // Always show "View All Blog Posts" button after the grid
+        const viewAllBtn = document.createElement('div');
+        viewAllBtn.style.textAlign = 'center';
+        viewAllBtn.style.marginTop = '40px';
         
         const btn = document.createElement('a');
-        btn.href = '/blog-list';
+        btn.href = '/blogs';
         btn.className = 'btn btn-primary';
-        btn.textContent = 'View All Posts';
+        btn.textContent = 'View All Blog Posts';
         btn.style.display = 'inline-block';
         
-        viewAllWrapper.appendChild(btn);
-        container.parentElement.appendChild(viewAllWrapper);
+        viewAllBtn.appendChild(btn);
+        container.parentElement.appendChild(viewAllBtn);
     }
 
     // Render skills
@@ -1006,38 +953,56 @@ class PortfolioApp {
         const container = document.querySelector('.skills-grid');
         if (!container) return;
         
+        const visibleSkills = skills.filter(s => !s.hidden);
+        
+        // Clear container safely
         container.innerHTML = '';
         
-        skills.filter(skill => !skill.hidden).forEach(skill => {
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'skill-category';
+        visibleSkills.forEach(skill => {
+            const skillDiv = document.createElement('div');
+            skillDiv.className = 'skill-category';
             
-            const categoryTitle = document.createElement('h3');
-            categoryTitle.textContent = skill.category;
-            categoryDiv.appendChild(categoryTitle);
+            const title = document.createElement('h4');
+            title.textContent = skill.category;
+            skillDiv.appendChild(title);
             
-            const skillsList = document.createElement('div');
-            skillsList.className = 'skills-list';
-            
-            (skill.skills || []).forEach(skillItem => {
-                const skillDiv = document.createElement('div');
-                skillDiv.className = 'skill-item';
-                
-                const skillName = document.createElement('span');
-                skillName.className = 'skill-name';
-                skillName.textContent = skillItem;
-                skillDiv.appendChild(skillName);
-                
-                skillsList.appendChild(skillDiv);
+            const tagsDiv = document.createElement('div');
+            tagsDiv.className = 'skill-tags';
+            (skill.skills || []).forEach(s => {
+                const span = document.createElement('span');
+                span.className = 'skill-tag';
+                span.textContent = s;
+                tagsDiv.appendChild(span);
             });
+            skillDiv.appendChild(tagsDiv);
             
-            categoryDiv.appendChild(skillsList);
-            container.appendChild(categoryDiv);
+            container.appendChild(skillDiv);
         });
+    }
+
+    // Reveal last name after animation delay
+    _scheduleLastNameReveal(lastName) {
+        const lastNameEl = document.getElementById('hero-name-lastname');
+        if (!lastNameEl) return;
+        // Use passed value, fall back to data attribute default (e.g. 'Acharya' from HTML)
+        const name = lastName || lastNameEl.dataset.lastname;
+        if (!name) return;
+        const letters = ['\u00A0', ...name.split('')];
+        let html = '';
+        letters.forEach(char => {
+            html += `<span class="name-letter" style="opacity:0;display:inline-block;transition:opacity 0.3s ease;">${char}</span>`;
+        });
+        setTimeout(() => {
+            lastNameEl.innerHTML = html;
+            lastNameEl.querySelectorAll('.name-letter').forEach((span, i) => {
+                setTimeout(() => { span.style.opacity = '1'; }, i * 80);
+            });
+        }, 1600);
     }
 
     // Apply settings from API
     applySettings(settings) {
+        // Update first name only - last name is revealed after animation via _scheduleLastNameReveal
         if (settings.hero_name) {
             const heroTitle = document.querySelector('.hero-name');
             if (heroTitle) {
@@ -1120,39 +1085,6 @@ class PortfolioApp {
                 setTimeout(() => { span.style.opacity = '1'; }, i * 80);
             });
         }, 1600);
-    }
-
-    // Contact form
-    setupContactForm() {
-        const form = document.getElementById('contact-form');
-        if (!form) return;
-        
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = new FormData(form);
-            const data = Object.fromEntries(formData);
-            
-            try {
-                const response = await fetch('/api/contact', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-                
-                if (response.ok) {
-                    alert('Message sent successfully!');
-                    form.reset();
-                } else {
-                    alert('Failed to send message. Please try again.');
-                }
-            } catch (error) {
-                console.error('Error sending message:', error);
-                alert('Failed to send message. Please try again.');
-            }
-        });
     }
 }
 
