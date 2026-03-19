@@ -301,6 +301,62 @@ router.patch('/messages/:id/read', (req, res) => {
     );
 });
 
+// Bulk mark messages as read (admin only)
+router.patch('/messages/bulk-mark-read', (req, res) => {
+    if (!req.session.isAdmin) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'Invalid message IDs' });
+    }
+    
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `UPDATE messages SET read = 1 WHERE id IN (${placeholders})`;
+    
+    db.run(query, ids, function(err) {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        
+        res.json({ 
+            success: true, 
+            updated: this.changes,
+            message: `Marked ${this.changes} message${this.changes > 1 ? 's' : ''} as read`
+        });
+    });
+});
+
+// Bulk delete messages (admin only)
+router.delete('/messages/bulk-delete', (req, res) => {
+    if (!req.session.isAdmin) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ error: 'Invalid message IDs' });
+    }
+    
+    const placeholders = ids.map(() => '?').join(',');
+    const query = `DELETE FROM messages WHERE id IN (${placeholders})`;
+    
+    db.run(query, ids, function(err) {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        
+        res.json({ 
+            success: true, 
+            deleted: this.changes,
+            message: `Deleted ${this.changes} message${this.changes > 1 ? 's' : ''}`
+        });
+    });
+});
+
 // Delete message (admin only)
 router.delete('/messages/:id', (req, res) => {
     if (!req.session.isAdmin) {

@@ -129,6 +129,40 @@
             border-color: var(--danger);
         }
         
+        .logout-btn-icon-only:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        /* Bulk Actions Styling */
+        .message-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+        
+        #bulk-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+        
+        #bulk-actions .btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #select-all {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+        
         /* Main Content */
         .main-content {
             flex: 1;
@@ -617,6 +651,19 @@
                             <!-- Dynamic content -->
                         </tbody>
                     </table>
+                    <div id="bulk-actions" style="display: none; margin-top: 16px; padding: 12px; background: var(--bg-light); border-radius: 8px; border: 1px solid var(--border);">
+                        <span id="selected-count">0 messages selected</span>
+                        <div style="margin-left: auto; display: flex; gap: 8px;">
+                            <button class="btn btn-danger" onclick="bulkDelete()">
+                                <i data-lucide="trash-2" width="16" height="16"></i>
+                                Delete Selected
+                            </button>
+                            <button class="btn btn-secondary" onclick="bulkMarkAsRead()">
+                                <i data-lucide="check" width="16" height="16"></i>
+                                Mark as Read
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div id="empty-state" class="empty-state" style="display: none;">
                     <i data-lucide="inbox"></i>
@@ -840,6 +887,21 @@
                 currentData = await res.json();
                 document.getElementById('content-title').textContent = 
                     section.charAt(0).toUpperCase() + section.slice(1);
+                
+                // Reset table header to original state (without checkbox)
+                const tableHead = document.getElementById('table-head');
+                tableHead.innerHTML = `
+                    <tr>
+                        <th>Title</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+                
+                // Hide bulk actions for non-messages sections
+                document.getElementById('bulk-actions').style.display = 'none';
+                
                 document.getElementById('table-head').style.display = '';
                 renderTable(currentData);
             } catch (err) {
@@ -1316,6 +1378,20 @@
                 currentData = skills;
                 document.getElementById('content-title').textContent = 'Skills & Expertise';
                 
+                // Reset table header to original state (without checkbox)
+                const tableHead = document.getElementById('table-head');
+                tableHead.innerHTML = `
+                    <tr>
+                        <th>Title</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+                
+                // Hide bulk actions for skills section
+                document.getElementById('bulk-actions').style.display = 'none';
+                
                 const tbody = document.getElementById('table-body');
                 const emptyState = document.getElementById('empty-state');
                 
@@ -1364,6 +1440,21 @@
                 currentData = messages;
                 document.getElementById('content-title').textContent = 'Contact Messages';
                 
+                // Update table header for messages with checkbox column
+                const tableHead = document.getElementById('table-head');
+                tableHead.innerHTML = `
+                    <tr>
+                        <th><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
+                        <th>Title</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+                
+                // Show bulk actions container
+                document.getElementById('bulk-actions').style.display = 'none';
+                
                 const tbody = document.getElementById('table-body');
                 const emptyState = document.getElementById('empty-state');
                 
@@ -1375,7 +1466,10 @@
                 
                 emptyState.style.display = 'none';
                 tbody.innerHTML = messages.map(msg => `
-                    <tr style="${msg.read ? '' : 'background: rgba(0, 212, 170, 0.05)'}">
+                    <tr style="${msg.read ? '' : 'background: rgba(0, 212, 170, 0.05)'}" data-id="${msg.id}">
+                        <td>
+                            <input type="checkbox" class="message-checkbox" value="${msg.id}" onchange="updateBulkActions()">
+                        </td>
                         <td><strong>${msg.name}</strong><br><small>${msg.email}</small></td>
                         <td>${msg.subject || 'No subject'}<br><small>${msg.message.substring(0, 50)}...</small></td>
                         <td>${msg.read ? '<span class="badge badge-visible">Read</span>' : '<span class="badge badge-work">New</span>'}</td>
@@ -1439,6 +1533,83 @@
                 loadDashboard();
             } catch (err) {
                 showToast('Error deleting message', 'error');
+            }
+        }
+        
+        // Bulk operations
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('select-all');
+            const checkboxes = document.querySelectorAll('.message-checkbox');
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+            
+            updateBulkActions();
+        }
+        
+        function updateBulkActions() {
+            const checkboxes = document.querySelectorAll('.message-checkbox:checked');
+            const bulkActions = document.getElementById('bulk-actions');
+            const selectedCount = document.getElementById('selected-count');
+            
+            if (checkboxes.length > 0) {
+                bulkActions.style.display = 'flex';
+                selectedCount.textContent = `${checkboxes.length} message${checkboxes.length > 1 ? 's' : ''} selected`;
+            } else {
+                bulkActions.style.display = 'none';
+            }
+        }
+        
+        async function bulkDelete() {
+            const checkboxes = document.querySelectorAll('.message-checkbox:checked');
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (ids.length === 0) return;
+            
+            if (!confirm(`Delete ${ids.length} message${ids.length > 1 ? 's' : ''}? This action cannot be undone.`)) return;
+            
+            try {
+                await fetch('/api/contact/messages/bulk-delete', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids })
+                });
+                
+                showToast(`${ids.length} message${ids.length > 1 ? 's' : ''} deleted`);
+                loadMessages();
+                loadDashboard();
+                
+                // Reset checkboxes
+                document.getElementById('select-all').checked = false;
+                updateBulkActions();
+            } catch (err) {
+                showToast('Error deleting messages', 'error');
+            }
+        }
+        
+        async function bulkMarkAsRead() {
+            const checkboxes = document.querySelectorAll('.message-checkbox:checked');
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (ids.length === 0) return;
+            
+            try {
+                await fetch('/api/contact/messages/bulk-mark-read', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids })
+                });
+                
+                showToast(`${ids.length} message${ids.length > 1 ? 's' : ''} marked as read`);
+                loadMessages();
+                loadDashboard();
+                
+                // Reset checkboxes
+                document.getElementById('select-all').checked = false;
+                updateBulkActions();
+            } catch (err) {
+                showToast('Error marking messages as read', 'error');
             }
         }
         
