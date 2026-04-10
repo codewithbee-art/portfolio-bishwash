@@ -921,12 +921,53 @@ section {
 
 .card-header {
     margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+}
+
+/* Special handling for timeline items to ensure proper alignment */
+.timeline-item.left .card-header {
+    align-items: flex-end;
+    text-align: right;
+}
+
+.timeline-item.right .card-header {
+    align-items: flex-start;
+    text-align: left;
+}
+
+/* Fix badge alignment for left and right timeline items */
+.timeline-item.left .card-badge {
+    align-self: flex-end;
+    margin-left: auto;
+}
+
+.timeline-item.right .card-badge {
+    align-self: flex-start;
+    margin-right: auto;
 }
 
 .card-header h3 {
     font-size: 18px;
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: 0;
+    align-self: stretch;
+}
+
+.card-header .position {
+    font-size: 14px;
+    color: var(--accent);
+    margin-bottom: 0;
+    align-self: stretch;
+}
+
+.card-header .date {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 0;
+    align-self: stretch;
 }
 
 .card-badge {
@@ -940,6 +981,9 @@ section {
     padding: 4px 10px;
     border-radius: 20px;
     margin-bottom: 12px;
+    align-self: flex-start;
+    width: auto;
+    flex-shrink: 0;
 }
 
 .card-badge.work {
@@ -970,12 +1014,44 @@ section {
 }
 
 .card-meta {
-    display: flex;
+    display: flex !important;
+    flex-direction: row !important;
     gap: 16px;
     margin-bottom: 12px;
     font-size: 12px;
     color: var(--text-muted);
-    flex-wrap: wrap;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+}
+
+.timeline-card .card-meta {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 16px;
+    justify-content: flex-start !important;
+}
+
+/* Fix alignment for left-side timeline items */
+.timeline-item:not(.right) .timeline-card .card-meta {
+    text-align: left !important;
+    justify-content: flex-end !important;
+}
+
+/* Fix alignment for right-side timeline items */
+.timeline-item.right .timeline-card .card-meta {
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+.card-meta .location,
+.card-meta .date {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .card-description {
@@ -1056,6 +1132,7 @@ section {
     border-radius: 20px;
     overflow: hidden;
     margin-bottom: 40px;
+    max-height: 340px;
     transition: var(--transition);
 }
 
@@ -1085,7 +1162,8 @@ section {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;
+    min-width: 0;
 }
 
 .featured-content h3 {
@@ -1112,10 +1190,10 @@ section {
 .tech-tag {
     font-size: 11px;
     padding: 5px 12px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
+    background: rgba(0, 212, 170, 0.1);
+    border: 1px solid rgba(0, 212, 170, 0.3);
     border-radius: 6px;
-    color: var(--text-secondary);
+    color: var(--accent);
 }
 
 .project-links {
@@ -1927,6 +2005,47 @@ textarea.form-input {
         left: 7px;
     }
     
+    /* Mobile card-meta alignment fixes */
+    .card-meta {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 14px;
+        display: flex !important;
+        justify-content: flex-start !important;
+    }
+    
+    .card-meta .location,
+    .card-meta .date {
+        white-space: nowrap;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    /* Mobile badge alignment */
+    .timeline-item.left .card-badge {
+        align-self: flex-start;
+        margin-left: 0;
+    }
+    
+    .timeline-item.right .card-badge {
+        align-self: flex-start;
+        margin-right: 0;
+    }
+    
+    /* Mobile card-header alignment */
+    .timeline-item.left .card-header {
+        align-items: flex-start;
+        text-align: left;
+    }
+    
+    .timeline-item.right .card-header {
+        align-items: flex-start;
+        text-align: left;
+    }
+    
     .projects-grid,
     .blog-grid {
         grid-template-columns: 1fr;
@@ -2023,12 +2142,13 @@ textarea.form-input {
         margin-bottom: 14px !important;
     }
     
-    .featured-post .featured-content span {
+    .featured-post .featured-content .tech-tag {
         display: inline-block !important;
-        padding: 4px 8px !important;
-        background: var(--accent) !important;
-        color: white !important;
-        border-radius: 4px !important;
+        padding: 5px 12px !important;
+        background: rgba(0, 212, 170, 0.1) !important;
+        border: 1px solid rgba(0, 212, 170, 0.3) !important;
+        color: var(--accent) !important;
+        border-radius: 6px !important;
         font-size: 11px !important;
     }
     
@@ -2072,6 +2192,36 @@ textarea.form-input {
         width: 18px;
         height: 18px;
     }
+    
+    .card-meta {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 14px;
+        display: flex !important;
+        justify-content: flex-start !important;
+    }
+    
+    /* Fix alignment for left-side timeline items on mobile */
+    .timeline-item:not(.right) .timeline-card .card-meta {
+        text-align: left !important;
+        justify-content: flex-end !important;
+    }
+    
+    /* Fix alignment for right-side timeline items on mobile */
+    .timeline-item.right .timeline-card .card-meta {
+        text-align: left !important;
+        justify-content: flex-start !important;
+    }
+    
+    .card-meta .location,
+    .card-meta .date {
+        white-space: nowrap;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
 }
 
 @media (max-width: 480px) {
@@ -2109,18 +2259,55 @@ textarea.form-input {
     .contact-form-container {
         padding: 20px;
     }
-}
-
-/* View All Container */
-.view-all-container {
-    margin-top: 20px;
-    text-align: center;
-}
-
-.view-all-container .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    
+    .card-meta {
+        flex-wrap: nowrap !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px;
+        display: flex !important;
+        justify-content: flex-start !important;
+    }
+    
+    /* Fix alignment for left-side timeline items on mobile */
+    .timeline-item:not(.right) .timeline-card .card-meta {
+        text-align: left !important;
+        justify-content: flex-end !important;
+    }
+    
+    /* Fix alignment for right-side timeline items on mobile */
+    .timeline-item.right .timeline-card .card-meta {
+        text-align: left !important;
+        justify-content: flex-start !important;
+    }
+    
+    .card-meta .location,
+    .card-meta .date {
+        white-space: nowrap;
+        font-size: 11px;
+        display: inline-flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    
+    .breadcrumb a {
+        color: var(--accent);
+        text-decoration: none;
+        transition: opacity 0.2s ease;
+    }
+    
+    .breadcrumb a:hover {
+        opacity: 0.8;
+    }
+    
+    .breadcrumb .separator {
+        color: var(--text-muted);
+        opacity: 0.5;
+    }
+    
+    .breadcrumb .current {
+        color: var(--text-secondary);
+    }
 }
 
 .btn-icon {

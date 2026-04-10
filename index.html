@@ -12,14 +12,14 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="Bishwash Acharya | Designer, Developer & Data Analyst">
     <meta property="og:description" content="Multi-skilled digital professional specializing in web development, UI/UX design, and data analytics. MSc in Information Systems from University of West London.">
-    <meta property="og:url" content="/">
-    <meta property="og:image" content="/assets/profile.png">
+    <meta property="og:url" content="https://bishwashacharya.uk/">
+    <meta property="og:image" content="https://bishwashacharya.uk/assets/profile.png">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Bishwash Acharya | Designer, Developer & Data Analyst">
     <meta name="twitter:description" content="Multi-skilled digital professional specializing in web development, UI/UX design, and data analytics. MSc in Information Systems from University of West London.">
-    <meta name="twitter:image" content="/assets/profile.png">
+    <meta name="twitter:image" content="https://bishwashacharya.uk/assets/profile.png">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +32,7 @@
     <link rel="stylesheet" href="css/popup.css">
     
     <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
     
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -40,11 +40,10 @@
         "@context": "https://schema.org",
         "@type": "Person",
         "name": "Bishwash Acharya",
-        "url": "/",
+        "url": "https://bishwashacharya.uk/",
         "image": "/assets/profile.png",
         "jobTitle": "Web Developer & Data Analyst",
         "description": "Multi-skilled digital professional specializing in web development, UI/UX design, and data analytics. Based in London with expertise in HTML, CSS, JavaScript, Python, and Power BI.",
-        "email": "bishwashacharya.uk@gmail.com",
         "address": {
             "@type": "PostalAddress",
             "addressLocality": "Wembley",
@@ -109,7 +108,7 @@
                     <i data-lucide="sun" class="theme-icon sun"></i>
                     <i data-lucide="moon" class="theme-icon moon"></i>
                 </button>
-                <a href="admin/login.html" class="admin-link" aria-label="Admin Login">
+                <a href="/admin" class="admin-link" aria-label="Admin Login">
                     <i data-lucide="lock" class="admin-icon"></i>
                 </a>
             </div>
@@ -197,7 +196,7 @@
         <section id="about" class="about-section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">About Me</h2>
+                    <h2 class="section-title" id="about-section-title">About Me</h2>
                     <div class="title-underline"></div>
                 </div>
                 <div class="about-content">
@@ -206,7 +205,7 @@
                             I'm a multi-skilled digital professional with experience in design, development, content creation, and data analysis. I enjoy building functional digital experiences and solving real-world problems with a mix of creativity and analytical thinking.
                         </p>
                         <p class="about-paragraph" id="about-paragraph-2">
-                            My career has given me a broad foundation — from creating visuals and writing content, to improving workflows and learning data tools. I'm currently focused on a long-term path in data and analytics, while leveraging my strengths in design, UI/UX, and content strategy.
+                            My career has given me a broad foundation  from creating visuals and writing content, to improving workflows and learning data tools. I'm currently focused on a long-term path in data and analytics, while leveraging my strengths in design, UI/UX, and content strategy.
                         </p>
                         <p class="about-paragraph" id="about-paragraph-3">
                             I'm based in Wembley, London, and open to opportunities where I can grow, contribute value, and be part of meaningful digital or data-driven work.
@@ -217,23 +216,23 @@
                             <div class="timeline-line"></div>
                             <div class="timeline-node">
                                 <div class="node-content">
-                                    <h4>Education</h4>
-                                    <p>MSc Information Systems</p>
-                                    <span>University of West London</span>
+                                    <h4 id="about-edu-title">Education</h4>
+                                    <p id="about-edu-desc">MSc Information Systems</p>
+                                    <span id="about-edu-sub">University of West London</span>
                                 </div>
                             </div>
                             <div class="timeline-node">
                                 <div class="node-content">
-                                    <h4>Experience</h4>
-                                    <p>Web Development & QA</p>
-                                    <span>Innovate Tech</span>
+                                    <h4 id="about-exp-title">Experience</h4>
+                                    <p id="about-exp-desc">Web Development & QA</p>
+                                    <span id="about-exp-sub">Innovate Tech</span>
                                 </div>
                             </div>
                             <div class="timeline-node">
                                 <div class="node-content">
-                                    <h4>Current</h4>
-                                    <p>Data & Analytics</p>
-                                    <span>London, UK</span>
+                                    <h4 id="about-current-title">Current</h4>
+                                    <p id="about-current-desc">Data & Analytics</p>
+                                    <span id="about-current-sub">London, UK</span>
                                 </div>
                             </div>
                         </div>
@@ -295,10 +294,10 @@
                             <div class="card-header">
                                 <h3>Sodexo</h3>
                                 <span class="position">Catering Assistant</span>
+                                <span class="date">📅 February 2024 – Present</span>
                             </div>
                             <div class="card-meta">
                                 <span class="location">📍 Greater London, UK</span>
-                                <span class="date">📅 February 2024 – Present</span>
                             </div>
                             <p class="card-description">
                                 Customer service in fast-paced healthcare environment, team collaboration, stock control, data & reporting exposure, operational optimization.
@@ -317,10 +316,10 @@
                             <div class="card-header">
                                 <h3>Innovate Tech</h3>
                                 <span class="position">Web Injection & QA Officer</span>
+                                <span class="date">📅 August 2021 – July 2023</span>
                             </div>
                             <div class="card-meta">
                                 <span class="location">📍 Kathmandu, Nepal</span>
-                                <span class="date">📅 August 2021 – July 2023</span>
                             </div>
                             <p class="card-description">
                                 HTML, CSS, JavaScript, C# for web app enhancement, QA testing & bug resolution, cross-functional teamwork, mentored junior developers.
@@ -353,10 +352,10 @@
                             <div class="card-header">
                                 <h3>University of West London</h3>
                                 <span class="position">MSc Information Systems</span>
+                                <span class="date">📅 2023 – December 2024</span>
                             </div>
                             <div class="card-meta">
                                 <span class="location">📍 London, UK</span>
-                                <span class="date">📅 2023 – December 2024</span>
                             </div>
                             <p class="card-description">
                                 Computer/IT Administration & Management with focus on data systems and analytics.
@@ -375,10 +374,10 @@
                             <div class="card-header">
                                 <h3>Herald College Kathmandu</h3>
                                 <span class="position">BSc (Hons) Computer Science</span>
+                                <span class="date">📅 September 2017 – November 2020</span>
                             </div>
                             <div class="card-meta">
                                 <span class="location">📍 Kathmandu, Nepal</span>
-                                <span class="date">📅 September 2017 – November 2020</span>
                             </div>
                             <p class="card-description">
                                 Computer Science fundamentals with programming, algorithms, and software development.
@@ -444,6 +443,10 @@
                             <div class="form-group">
                                 <textarea id="message" name="message" class="form-input" rows="5" placeholder="Tell me about your project or inquiry..." autocomplete="off" required></textarea>
                             </div>
+                            <!-- Honeypot — hidden from real users, bots auto-fill it -->
+                            <div style="position:absolute;left:-9999px;top:-9999px;" aria-hidden="true">
+                                <input type="text" name="website" id="website" tabindex="-1" autocomplete="off">
+                            </div>
                             <button type="submit" class="btn btn-primary magnetic-btn">
                                 <span>Send Message</span>
                                 <i data-lucide="send" class="btn-icon"></i>
@@ -491,8 +494,8 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-left">
-                    <p>Designed & Built with ❤️ by Bishwash Acharya</p>
-                    <span class="footer-year">© 2025</span>
+                    <p>Designed & Built ❤️ Bishwash Acharya</p>
+                    <span class="footer-year">2025</span>
                 </div>
                 <div class="footer-right">
                     <div class="currently-listening">
@@ -512,3 +515,6 @@
     <script src="js/main.js"></script>
 </body>
 </html>
+
+
+

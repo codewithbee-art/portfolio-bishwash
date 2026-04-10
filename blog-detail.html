@@ -30,7 +30,7 @@
     <link rel="stylesheet" href="/css/animations.css">
     
     <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
     
     <!-- Markdown rendering + XSS sanitization -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -252,6 +252,62 @@
             gap: 12px;
         }
 
+        /* Share Bar */
+        .share-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .share-bar-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+
+        .share-btn svg {
+            transition: transform 0.25s ease;
+        }
+
+        .share-btn:hover {
+            transform: translateY(-3px);
+            color: #fff;
+        }
+
+        .share-btn:hover svg {
+            transform: scale(1.2);
+        }
+
+        .share-btn:active { transform: translateY(-1px); }
+
+        .share-btn.twitter:hover  { background: #000;    border-color: #333;    box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+        .share-btn.linkedin:hover { background: #0077b5; border-color: #0077b5; box-shadow: 0 6px 16px rgba(0,119,181,0.4); }
+        .share-btn.facebook:hover { background: #1877f2; border-color: #1877f2; box-shadow: 0 6px 16px rgba(24,119,242,0.4); }
+        .share-btn.whatsapp:hover { background: #25d366; border-color: #25d366; box-shadow: 0 6px 16px rgba(37,211,102,0.4); }
+        .share-btn.copy:hover     { background: var(--accent); border-color: var(--accent); color: var(--bg-dark); box-shadow: 0 6px 16px rgba(0,212,170,0.4); }
+        .share-btn.copy.copied    { background: var(--accent); border-color: var(--accent); color: var(--bg-dark); box-shadow: 0 6px 16px rgba(0,212,170,0.4); transform: translateY(-3px); }
+
         @media (max-width: 768px) {
             .blog-detail-container {
                 padding: 100px 16px 40px;
@@ -267,6 +323,16 @@
 
             .related-posts-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .blog-detail-footer {
+                flex-wrap: wrap;
+            }
+
+            .blog-detail-footer-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+                white-space: nowrap;
             }
         }
     </style>
@@ -292,7 +358,7 @@
                     <i data-lucide="sun" class="theme-icon sun"></i>
                     <i data-lucide="moon" class="theme-icon moon"></i>
                 </button>
-                <a href="admin/login.html" class="admin-link" aria-label="Admin Login">
+                <a href="/admin" class="admin-link" aria-label="Admin Login">
                     <i data-lucide="lock" class="admin-icon"></i>
                 </a>
             </div>
@@ -327,9 +393,8 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-left">
-                    <p>Designed & Built by Bishwash Acharya</p>
+                    <p>Designed & Built ❤️ Bishwash Acharya</p>
                     <span class="footer-year">2025</span>
-                    <span class="footer-heart">❤️</span>
                 </div>
                 <div class="footer-right">
                     <div class="currently-listening">
@@ -342,7 +407,7 @@
         </div>
     </footer>
 
-    <script src="/js/main.js"></script>
+    <script src="/js/main.js" data-no-auto-init></script>
     <script>
         // Get blog ID from URL path
         function getBlogIdFromPath() {
@@ -419,6 +484,20 @@
                 dateItem.appendChild(dateSpan);
                 meta.appendChild(dateItem);
                 
+                if (post.author) {
+                    const authorItem = document.createElement('div');
+                    authorItem.className = 'blog-detail-meta-item';
+                    const authorIcon = document.createElement('i');
+                    authorIcon.setAttribute('data-lucide', 'user');
+                    authorIcon.setAttribute('width', '16');
+                    authorIcon.setAttribute('height', '16');
+                    authorItem.appendChild(authorIcon);
+                    const authorSpan = document.createElement('span');
+                    authorSpan.textContent = post.author;
+                    authorItem.appendChild(authorSpan);
+                    meta.appendChild(authorItem);
+                }
+                
                 const timeItem = document.createElement('div');
                 timeItem.className = 'blog-detail-meta-item';
                 const timeIcon = document.createElement('i');
@@ -444,6 +523,75 @@
                     });
                     header.appendChild(tagsDiv);
                 }
+
+                // Share bar — built here, appended to footer below
+                const shareBar = document.createElement('div');
+                shareBar.className = 'share-bar';
+                const shareLabel = document.createElement('span');
+                shareLabel.className = 'share-bar-label';
+                shareLabel.textContent = 'Share';
+                shareBar.appendChild(shareLabel);
+
+                const postUrl = encodeURIComponent(window.location.href);
+                const postTitle = encodeURIComponent(post.title + ' — Bishwash Acharya');
+
+                const shareLinks = [
+                    {
+                        cls: 'twitter',
+                        label: 'Twitter / X',
+                        href: `https://twitter.com/intent/tweet?url=${postUrl}&text=${postTitle}`,
+                        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>'
+                    },
+                    {
+                        cls: 'linkedin',
+                        label: 'LinkedIn',
+                        href: `https://www.linkedin.com/sharing/share-offsite/?url=${postUrl}`,
+                        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>'
+                    },
+                    {
+                        cls: 'facebook',
+                        label: 'Facebook',
+                        href: `https://www.facebook.com/sharer/sharer.php?u=${postUrl}`,
+                        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>'
+                    },
+                    {
+                        cls: 'whatsapp',
+                        label: 'WhatsApp',
+                        href: `https://wa.me/?text=${postTitle}%20${postUrl}`,
+                        icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>'
+                    }
+                ];
+
+                shareLinks.forEach(({ cls, label, href, icon }) => {
+                    const btn = document.createElement('a');
+                    btn.className = `share-btn ${cls}`;
+                    btn.href = href;
+                    btn.target = '_blank';
+                    btn.rel = 'noopener noreferrer';
+                    btn.setAttribute('title', label);
+                    btn.innerHTML = icon;
+                    shareBar.appendChild(btn);
+                });
+
+                // Copy link button
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'share-btn copy';
+                const iconCopy = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                const iconCheck = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                copyBtn.innerHTML = iconCopy;
+                copyBtn.setAttribute('title', 'Copy link');
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        copyBtn.innerHTML = iconCheck;
+                        copyBtn.classList.add('copied');
+                        setTimeout(() => {
+                            copyBtn.innerHTML = iconCopy;
+                            copyBtn.classList.remove('copied');
+                        }, 2000);
+                    });
+                });
+                shareBar.appendChild(copyBtn);
+                // Share bar goes into footer, not header
                 
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'blog-detail-content';
@@ -472,6 +620,7 @@
                 const footerText = document.createTextNode('Back to posts');
                 footerBtn.appendChild(footerText);
                 footer.appendChild(footerBtn);
+                footer.appendChild(shareBar);
                 
                 const container = document.getElementById('blog-content');
                 container.innerHTML = '';
@@ -502,7 +651,7 @@
             }
         }
 
-        // Load related posts based on shared tags
+        // Load related posts based on shared tags, fallback to recent posts
         async function loadRelatedPosts(currentPost) {
             try {
                 const res = await fetch('/api/content/blog');
@@ -512,32 +661,47 @@
                     p.published && !p.hidden && p.id !== currentPost.id
                 );
 
+                if (publishedPosts.length === 0) return;
+
                 const currentTags = currentPost.tags || [];
-                if (currentTags.length === 0 || publishedPosts.length === 0) return;
+                let displayPosts = [];
+                let sectionTitle = 'Recommended Posts';
 
                 // Score posts by number of shared tags
-                const scored = publishedPosts.map(post => {
-                    const postTags = post.tags || [];
-                    const sharedCount = currentTags.filter(t => postTags.includes(t)).length;
-                    return { post, sharedCount };
-                }).filter(s => s.sharedCount > 0)
-                  .sort((a, b) => b.sharedCount - a.sharedCount)
-                  .slice(0, 3);
+                if (currentTags.length > 0) {
+                    const scored = publishedPosts.map(post => {
+                        const postTags = post.tags || [];
+                        const sharedCount = currentTags.filter(t => postTags.includes(t)).length;
+                        return { post, sharedCount };
+                    }).filter(s => s.sharedCount > 0)
+                      .sort((a, b) => b.sharedCount - a.sharedCount)
+                      .slice(0, 3);
 
-                if (scored.length === 0) return;
+                    displayPosts = scored.map(s => s.post);
+                }
 
-                // Build related posts section
+                // Fallback: if no tag matches, show most recent posts
+                if (displayPosts.length === 0) {
+                    displayPosts = publishedPosts
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        .slice(0, 3);
+                    sectionTitle = 'More Posts';
+                }
+
+                if (displayPosts.length === 0) return;
+
+                // Build related posts section with divider
                 const section = document.createElement('div');
                 section.className = 'related-posts';
 
                 const heading = document.createElement('h2');
-                heading.textContent = 'Related Posts';
+                heading.textContent = sectionTitle;
                 section.appendChild(heading);
 
                 const grid = document.createElement('div');
                 grid.className = 'related-posts-grid';
 
-                scored.forEach(({ post }) => {
+                displayPosts.forEach(post => {
                     const card = document.createElement('div');
                     card.className = 'related-post-card';
                     card.onclick = () => window.location.href = `/blog/${post.id}`;
@@ -559,6 +723,16 @@
                     const title = document.createElement('h4');
                     title.textContent = post.title;
                     content.appendChild(title);
+
+                    if (post.author) {
+                        const authorDiv = document.createElement('div');
+                        authorDiv.className = 'post-meta';
+                        authorDiv.style.marginBottom = '4px';
+                        const authorSpan = document.createElement('span');
+                        authorSpan.textContent = 'By ' + post.author;
+                        authorDiv.appendChild(authorSpan);
+                        content.appendChild(authorDiv);
+                    }
 
                     const meta = document.createElement('div');
                     meta.className = 'post-meta';

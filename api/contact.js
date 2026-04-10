@@ -4,6 +4,7 @@ const escapeHtml = require('escape-html');
 const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('../database/db');
+const { decrypt } = require('./crypto-utils');
 const EmailVerificationService = require('./email-verification');
 const DeviceProtection = require('./device-protection');
 const router = express.Router();
@@ -11,6 +12,7 @@ const router = express.Router();
 // Initialize services
 const emailVerifier = new EmailVerificationService();
 const deviceProtection = new DeviceProtection();
+deviceProtection.startCleanupInterval();
 
 // Input validation constants
 const MAX_MESSAGE_LENGTH = 5000;
@@ -29,7 +31,8 @@ function getDbSetting(key) {
 
 async function getSmtpConfig() {
     const dbUser = await getDbSetting('smtp_user');
-    const dbPass = await getDbSetting('smtp_app_password');
+    const dbPassRaw = await getDbSetting('smtp_app_password');
+    const dbPass = dbPassRaw ? decrypt(dbPassRaw) : null;
     const user = dbUser || process.env.GMAIL_USER;
     const pass = dbPass || process.env.GMAIL_APP_PASSWORD;
     if (!user || !pass) return null;
@@ -66,7 +69,9 @@ function validateEmail(email) {
         /^test@|^demo@|^fake@|^sample@|^random@/i // exact suspicious usernames (noreply is allowed)
     ];
     
-    const domain = email.split('@')[1].toLowerCase();
+    const atIndex = email.indexOf('@');
+    if (atIndex === -1) return { valid: false, message: 'Please enter a valid email address' };
+    const domain = email.slice(atIndex + 1).toLowerCase();
     
     // Check for disposable email
     if (disposableDomains.some(disposable => domain.includes(disposable))) {
@@ -81,29 +86,20 @@ function validateEmail(email) {
     return { valid: true };
 }
 
-// Test endpoint to verify server is running updated code
-router.get('/test', (req, res) => {
-    res.json({ 
-        message: 'Contact API is working', 
-        timestamp: new Date().toISOString(),
-        validationEnabled: true
-    });
-});
-
 // Submit contact form (public)
 router.post('/', async (req, res) => {
-    console.log('🔍 Contact form submission received');
-    console.log('🔍 Request body:', req.body);
+    const { name, email, subject, message, website } = req.body;
     
-    const { name, email, subject, message } = req.body;
+    // Honeypot check — hidden field that only bots fill in
+    if (website && website.trim().length > 0) {
+        console.warn('🤖 Honeypot triggered — bot submission blocked');
+        return res.json({ success: true, message: 'Message sent successfully!' }); // fake success
+    }
     
     // Device protection check
-    console.log('🔍 Checking device protection...');
     const protectionResult = await deviceProtection.checkDevice(req);
-    console.log('🔍 Protection result:', protectionResult);
     
     if (!protectionResult.allowed) {
-        console.log('🚫 Device protection triggered:', protectionResult.action);
         
         if (protectionResult.action === 'block') {
             return res.status(429).json({ 
@@ -123,9 +119,7 @@ router.post('/', async (req, res) => {
     }
     
     // Input validation
-    console.log('🔍 Validating inputs...');
     if (!name || !email || !message) {
-        console.log('❌ Missing required fields:', { name: !!name, email: !!email, message: !!message });
         return res.status(400).json({ error: 'Name, email, and message are required' });
     }
     
@@ -140,6 +134,12 @@ router.post('/', async (req, res) => {
     
     if (!validator.isEmail(email)) {
         return res.status(400).json({ error: 'Please provide a valid email address' });
+    }
+
+    // Fast synchronous check: disposable domains & suspicious patterns
+    const basicCheck = validateEmail(email);
+    if (!basicCheck.valid) {
+        return res.status(400).json({ error: basicCheck.message });
     }
     
     // Professional email verification
@@ -175,23 +175,19 @@ router.post('/', async (req, res) => {
     const id = uuidv4();
     
     // Save to database
-    console.log('🔍 Saving to database...');
     db.run(
         'INSERT INTO messages (id, name, email, subject, message) VALUES (?, ?, ?, ?, ?)',
         [id, trimmedName, trimmedEmail, trimmedSubject, trimmedMessage],
         async function(err) {
             if (err) {
-                console.error('❌ Database error:', err);
+                console.error('Database error saving message:', err);
                 return res.status(500).json({ error: 'Failed to save message' });
             }
-            
-            console.log('✅ Message saved to database successfully');
             
             // Send email notification if SMTP is configured
             const mailer = await getTransporter();
             const smtp = await getSmtpConfig();
             if (mailer && smtp) {
-                console.log('🔍 Sending email notification...');
                 try {
                     const appBaseUrl = process.env.APP_BASE_URL || `${req.protocol}://${req.get('host')}`;
                     await mailer.sendMail({
@@ -206,22 +202,18 @@ router.post('/', async (req, res) => {
                             <p><strong>Message:</strong></p>
                             <p>${escapeHtml(trimmedMessage).replace(/\n/g, '<br>')}</p>
                             <hr>
-                            <p>View in admin panel: <a href="${appBaseUrl}/admin/dashboard">Open Dashboard</a></p>
+                            <p>View in admin panel: <a href="${appBaseUrl}${process.env.ADMIN_PATH || '/admin'}/dashboard">Open Dashboard</a></p>
                         `
                     });
-                    console.log('✅ Email sent successfully');
                 } catch (emailErr) {
-                    console.error('❌ Email error:', emailErr);
+                    console.error('Email notification error:', emailErr);
                     // Don't fail the request if email fails
                 }
-            } else {
-                console.log('⚠️ SMTP not configured, skipping email');
             }
             
             // Record successful submission for device protection
             const fingerprint = deviceProtection.getDeviceFingerprint(req);
             deviceProtection.recordSubmission(fingerprint);
-            console.log('✅ Device submission recorded');
             
             // Include warning info if applicable
             const responseData = { success: true, message: 'Message sent successfully' };
@@ -229,7 +221,6 @@ router.post('/', async (req, res) => {
                 responseData.warning = protectionResult.message;
             }
             
-            console.log('✅ Sending success response');
             res.json(responseData);
         }
     );
@@ -243,7 +234,8 @@ router.get('/messages', (req, res) => {
     
     db.all('SELECT * FROM messages ORDER BY created_at DESC', [], (err, rows) => {
         if (err) {
-            return res.status(500).json({ error: err.message });
+            console.error('Error fetching messages:', err);
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json(rows);
     });
@@ -257,7 +249,8 @@ router.get('/messages/export', (req, res) => {
 
     db.all('SELECT * FROM messages ORDER BY created_at DESC', [], (err, rows) => {
         if (err) {
-            return res.status(500).json({ error: err.message });
+            console.error('Error exporting messages:', err);
+            return res.status(500).json({ error: 'Internal server error' });
         }
 
         const header = ['Name', 'Email', 'Subject', 'Message', 'Read', 'Created At'];
@@ -283,25 +276,7 @@ router.get('/messages/export', (req, res) => {
     });
 });
 
-// Mark message as read (admin only)
-router.patch('/messages/:id/read', (req, res) => {
-    if (!req.session.isAdmin) {
-        return res.status(401).json({ error: 'Unauthorized' });
-    }
-    
-    db.run(
-        'UPDATE messages SET read = 1 WHERE id = ?',
-        [req.params.id],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-            res.json({ success: true });
-        }
-    );
-});
-
-// Bulk mark messages as read (admin only)
+// Bulk mark messages as read (admin only) — must be before :id routes
 router.patch('/messages/bulk-mark-read', (req, res) => {
     if (!req.session.isAdmin) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -318,7 +293,8 @@ router.patch('/messages/bulk-mark-read', (req, res) => {
     
     db.run(query, ids, function(err) {
         if (err) {
-            return res.status(500).json({ error: err.message });
+            console.error('Error updating messages:', err);
+            return res.status(500).json({ error: 'Internal server error' });
         }
         
         res.json({ 
@@ -329,7 +305,7 @@ router.patch('/messages/bulk-mark-read', (req, res) => {
     });
 });
 
-// Bulk delete messages (admin only)
+// Bulk delete messages (admin only) — must be before :id routes
 router.delete('/messages/bulk-delete', (req, res) => {
     if (!req.session.isAdmin) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -346,7 +322,8 @@ router.delete('/messages/bulk-delete', (req, res) => {
     
     db.run(query, ids, function(err) {
         if (err) {
-            return res.status(500).json({ error: err.message });
+            console.error('Error updating messages:', err);
+            return res.status(500).json({ error: 'Internal server error' });
         }
         
         res.json({ 
@@ -357,6 +334,25 @@ router.delete('/messages/bulk-delete', (req, res) => {
     });
 });
 
+// Mark message as read (admin only)
+router.patch('/messages/:id/read', (req, res) => {
+    if (!req.session.isAdmin) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    db.run(
+        'UPDATE messages SET read = 1 WHERE id = ?',
+        [req.params.id],
+        function(err) {
+            if (err) {
+                console.error('Error toggling message read status:', err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+            res.json({ success: true });
+        }
+    );
+});
+
 // Delete message (admin only)
 router.delete('/messages/:id', (req, res) => {
     if (!req.session.isAdmin) {
@@ -365,7 +361,8 @@ router.delete('/messages/:id', (req, res) => {
     
     db.run('DELETE FROM messages WHERE id = ?', [req.params.id], function(err) {
         if (err) {
-            return res.status(500).json({ error: err.message });
+            console.error('Error deleting message:', err);
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json({ success: true, changes: this.changes });
     });

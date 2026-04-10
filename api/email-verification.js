@@ -1,5 +1,6 @@
 // Professional Email Verification Service
 const axios = require('axios');
+const dns = require('dns').promises;
 
 class EmailVerificationService {
     constructor() {
@@ -94,6 +95,45 @@ class EmailVerificationService {
         } catch (error) {
             console.error('Abstract API error:', error.message);
             return { available: false, reason: 'API call failed' };
+        }
+    }
+
+    // DNS MX record check — verifies the domain can actually receive email
+    async verifyMxRecords(domain) {
+        // Well-known providers — skip DNS lookup for speed
+        const trustedDomains = [
+            'gmail.com', 'googlemail.com', 'yahoo.com', 'yahoo.co.uk',
+            'outlook.com', 'hotmail.com', 'hotmail.co.uk', 'live.com', 'msn.com',
+            'icloud.com', 'me.com', 'mac.com', 'aol.com',
+            'protonmail.com', 'proton.me', 'pm.me',
+            'zoho.com', 'zohomail.com', 'fastmail.com',
+            'yandex.com', 'yandex.ru', 'mail.ru',
+            'gmx.com', 'gmx.net', 'gmx.de',
+            'tutanota.com', 'tuta.io',
+            'hey.com', 'mailbox.org',
+            'virginmedia.com', 'sky.com', 'btinternet.com', 'talktalk.net',
+            'edu', 'ac.uk', 'gov.uk'
+        ];
+
+        // Check if domain or its TLD suffix is trusted
+        if (trustedDomains.some(td => domain === td || domain.endsWith('.' + td))) {
+            return { hasMx: true, reason: 'Trusted domain' };
+        }
+
+        try {
+            const mxRecords = await dns.resolveMx(domain);
+            if (mxRecords && mxRecords.length > 0) {
+                return { hasMx: true, reason: 'Valid MX records found', records: mxRecords.length };
+            }
+            return { hasMx: false, reason: 'No MX records — domain cannot receive email' };
+        } catch (err) {
+            // ENODATA = no MX records, ENOTFOUND = domain doesn't exist
+            if (err.code === 'ENODATA' || err.code === 'ENOTFOUND') {
+                return { hasMx: false, reason: `Domain does not exist or has no mail server (${err.code})` };
+            }
+            // DNS timeout, refused, or transient failure — allow to avoid blocking real users
+            console.error('DNS MX lookup error for', domain, err.code || err.message);
+            return { hasMx: true, reason: 'DNS lookup unavailable — allowing as fallback' };
         }
     }
 
@@ -198,6 +238,25 @@ class EmailVerificationService {
         if (domain.includes('fake') || domain.includes('test') || domain.includes('demo')) {
             return { valid: false, reason: 'Fake/test domain' };
         }
+
+        // Known parked / non-email generic domains
+        const nonEmailDomains = [
+            'example.com', 'example.org', 'example.net',
+            'xyz.com', 'abc.com', 'aaa.com', 'zzz.com',
+            'domain.com', 'website.com', 'email.com',
+            'mail.com', 'name.com', 'site.com', 'web.com',
+            'asdf.com', 'qwerty.com', 'abcdef.com',
+            'localhost', 'invalid', 'test.com'
+        ];
+        if (nonEmailDomains.includes(domain)) {
+            return { valid: false, reason: 'Non-email generic domain' };
+        }
+
+        // Flag single-word domains 3 chars or shorter (e.g. xyz.com, abc.co)
+        const domainName = domain.split('.')[0];
+        if (domainName.length <= 3 && !/^(aol|gmx|web|msn|att|cox|sky|bt)$/i.test(domainName)) {
+            return { valid: false, reason: 'Suspicious short domain name' };
+        }
         
         return { valid: true, reason: 'Passed local validation' };
     }
@@ -231,12 +290,26 @@ class EmailVerificationService {
             }
         }
 
-        // Fallback to local validation
-        console.log('🔄 Using local validation fallback');
+        // Fallback to local validation + DNS MX check
+        console.log('🔄 Using local validation fallback with DNS MX check');
         const result = this.advancedLocalValidation(email);
-        console.log('📋 Local validation result:', result);
-        
-        return { valid: result.valid, method: 'Local', ...result };
+        if (!result.valid) {
+            console.log('📋 Local validation failed:', result);
+            return { valid: false, method: 'Local', ...result };
+        }
+
+        // DNS MX record verification — catches xyz@xyz.com, abc@fake.xyz, etc.
+        const domain = email.split('@')[1]?.toLowerCase();
+        if (domain) {
+            const mxResult = await this.verifyMxRecords(domain);
+            console.log('📋 MX record check:', domain, mxResult);
+            if (!mxResult.hasMx) {
+                return { valid: false, method: 'DNS-MX', reason: mxResult.reason };
+            }
+        }
+
+        console.log('✅ Local + MX validation passed');
+        return { valid: true, method: 'Local+MX', ...result };
     }
 }
 

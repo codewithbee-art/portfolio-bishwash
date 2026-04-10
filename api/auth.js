@@ -1,9 +1,11 @@
 const express = require('express');
+const crypto = require('crypto');
 const bcryptjs = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { db } = require('../database/db');
+const { decrypt } = require('./crypto-utils');
 
 // Admin credentials from environment variables (initial values only — DB takes priority)
 const ENV_USERNAME = process.env.ADMIN_USERNAME || 'admin';
@@ -15,23 +17,16 @@ async function getAdminUsername() {
     return dbUsername || ENV_USERNAME;
 }
 
-// In-memory store for password reset tokens
-const resetTokens = new Map();
-
-// Clean up expired reset tokens every 15 minutes
+// Clean up expired/used reset tokens every 15 minutes
 setInterval(() => {
-    const now = Date.now();
-    for (const [key, token] of resetTokens.entries()) {
-        if (token.expiresAt < now || token.used) {
-            resetTokens.delete(key);
-        }
-    }
+    db.run('DELETE FROM reset_tokens WHERE expires_at < ? OR used = 1', [Date.now()]);
 }, 15 * 60 * 1000);
 
 // Dynamic SMTP: reads from DB first, falls back to .env
 async function getSmtpConfig() {
     const dbUser = await getDbSetting('smtp_user');
-    const dbPass = await getDbSetting('smtp_app_password');
+    const dbPassRaw = await getDbSetting('smtp_app_password');
+    const dbPass = dbPassRaw ? decrypt(dbPassRaw) : null;
     const user = dbUser || process.env.GMAIL_USER;
     const pass = dbPass || process.env.GMAIL_APP_PASSWORD;
     if (!user || !pass) return null;
@@ -97,27 +92,41 @@ const initializeHashedPassword = async () => {
     }
 };
 
-// Initialize credentials on module load
+// Initialize credentials — called explicitly by server.js before listening.
+// Never call fire-and-forget; always await this at startup.
 const initializeCredentials = async () => {
     await initializeHashedPassword();
-    // Persist initial username to DB if not already there
+    // Only write ENV username to DB if DB has no username yet (first boot)
     const dbUsername = await getDbSetting('admin_username');
     if (!dbUsername) {
         await setDbSetting('admin_username', ENV_USERNAME);
+        console.log(`✓ Admin username initialised from env: ${ENV_USERNAME}`);
+    } else {
+        console.log(`✓ Admin username loaded from database: ${dbUsername}`);
     }
 };
-initializeCredentials();
 
 // Login
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
     const adminUsername = await getAdminUsername();
     
-    if (username !== adminUsername) {
+    // Case-insensitive comparison — email addresses are case-insensitive per RFC
+    if (!username || username.toLowerCase() !== adminUsername.toLowerCase()) {
         return res.status(401).json({ error: 'Invalid credentials' });
     }
     
     try {
+        // If init hasn't finished yet, re-load from DB before comparing
+        if (!hashedPassword) {
+            await initializeHashedPassword();
+        }
+
+        if (!hashedPassword) {
+            console.error('Admin password not configured');
+            return res.status(500).json({ error: 'Server configuration error. Please contact the administrator.' });
+        }
+
         const isValid = await bcryptjs.compare(password, hashedPassword);
         
         if (!isValid) {
@@ -158,24 +167,24 @@ router.post('/request-password-reset', async (req, res) => {
     }
     
     const adminUsername = await getAdminUsername();
-    if (username !== adminUsername) {
+    if (username.toLowerCase() !== adminUsername.toLowerCase()) {
         // Return generic message to prevent username enumeration
         return res.json({ success: true, message: 'If the username exists, a reset code has been sent to the recovery email.' });
     }
     
     try {
-        // Generate reset code (8 chars, easy to type)
-        const resetCode = Math.random().toString(36).substring(2, 6).toUpperCase() + 
-                         Math.random().toString(36).substring(2, 6).toUpperCase();
+        // Generate reset code (8 chars, cryptographically secure)
+        const resetCode = crypto.randomBytes(4).toString('hex').toUpperCase();
         const resetToken = uuidv4();
         
         // Store token with expiration (15 minutes)
-        resetTokens.set(resetToken, {
-            code: resetCode,
-            username: username,
-            createdAt: Date.now(),
-            expiresAt: Date.now() + (15 * 60 * 1000),
-            used: false
+        const now = Date.now();
+        await new Promise((resolve, reject) => {
+            db.run(
+                'INSERT INTO reset_tokens (token, code, username, expires_at, used, created_at) VALUES (?, ?, ?, ?, 0, ?)',
+                [resetToken, resetCode, username, now + (15 * 60 * 1000), now],
+                (err) => err ? reject(err) : resolve()
+            );
         });
         
         // Build transporter dynamically from DB/env
@@ -240,16 +249,13 @@ router.post('/reset-password', async (req, res) => {
     
     try {
         // Find the token by code
-        let foundToken = null;
-        let foundKey = null;
-        
-        for (const [key, token] of resetTokens.entries()) {
-            if (token.code === resetCode && !token.used && token.expiresAt > Date.now()) {
-                foundToken = token;
-                foundKey = key;
-                break;
-            }
-        }
+        const foundToken = await new Promise((resolve, reject) => {
+            db.get(
+                'SELECT token, code, username FROM reset_tokens WHERE code = ? AND used = 0 AND expires_at > ?',
+                [resetCode, Date.now()],
+                (err, row) => err ? reject(err) : resolve(row)
+            );
+        });
         
         if (!foundToken) {
             return res.status(401).json({ error: 'Invalid or expired reset code' });
@@ -260,8 +266,11 @@ router.post('/reset-password', async (req, res) => {
         await setDbSetting('admin_password_hash', hashedPassword);
         
         // Mark token as used
-        foundToken.used = true;
-        resetTokens.set(foundKey, foundToken);
+        await new Promise((resolve, reject) => {
+            db.run('UPDATE reset_tokens SET used = 1 WHERE token = ?', [foundToken.token],
+                (err) => err ? reject(err) : resolve()
+            );
+        });
         
         res.json({ success: true, message: 'Password reset successfully' });
     } catch (err) {
@@ -389,8 +398,9 @@ router.post('/test-email', async (req, res) => {
         res.json({ success: true, message: `Test email sent to ${masked}` });
     } catch (err) {
         console.error('Test email failed:', err);
-        res.status(500).json({ error: `Email failed: ${err.message}` });
+        res.status(500).json({ error: 'Email test failed. Please check your SMTP settings.' });
     }
 });
 
 module.exports = router;
+module.exports.initializeCredentials = initializeCredentials;

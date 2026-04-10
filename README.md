@@ -222,6 +222,55 @@ npm start
 - Generate App Password (not your regular password)
 - Use the 16-character app password in .env
 
+## Future Development Plans
+
+Planned features to expand the site into a revenue-generating platform.
+
+### 1. Paid Consultation Booking System
+A Calendly-style booking page where visitors can schedule paid 1-on-1 consultations (web dev, data analytics, CV reviews, career advice). Integrates Stripe/PayPal for payments.
+
+- **Profit model:** £30–£100/hour sessions
+- **Build effort:** Medium
+- **Key components:** Time-slot picker, Stripe Checkout, booking confirmation emails
+
+### 2. Premium Blog / Gated Content
+A paywall or members-only section for in-depth tutorials, templates, datasets, or course-style content. Free posts attract traffic via SEO; premium posts convert readers to paying members.
+
+- **Profit model:** £5–£15/month subscription or one-time purchases per article
+- **Build effort:** Low–Medium
+- **Key components:** Access-code or Stripe payment gate on selected blog posts, member dashboard
+
+### 3. Digital Products Store (Templates, Dashboards, Code)
+Sell downloadable products: portfolio templates, Power BI dashboards, Excel templates, Figma UI kits, or code snippets. The existing admin panel can be extended to manage products.
+
+- **Profit model:** £10–£50 per product (passive income)
+- **Build effort:** Medium
+- **Key components:** Products section, Stripe checkout, download delivery via email/link
+
+### 4. Freelance Services / Hire Me Page
+A dedicated "Hire Me" page with clear service packages (e.g., "Portfolio Website — £500", "Dashboard Design — £300", "Data Analysis Report — £200"). Includes testimonials, a project intake form, and deposit payment.
+
+- **Profit model:** £200–£2000+ per project
+- **Build effort:** Low
+- **Key components:** Pricing cards, project intake form, payment link
+
+### 5. Sponsored Content / Ad Partnerships
+Once the blog gains traffic, offer sponsored blog post placements, tool/course reviews, or affiliate links (e.g., hosting providers, dev tools, courses). Add a "Collaborate" or "Advertise" page with traffic stats and pricing.
+
+- **Profit model:** £50–£500+ per sponsored post, recurring affiliate commissions
+- **Build effort:** Very Low
+- **Key components:** Advertise/Collaborate page, affiliate link integration in blog posts
+
+### Priority Roadmap
+
+| Feature | Profit Potential | Build Effort | Passive Income? |
+|---------|-----------------|-------------|-----------------|
+| Digital Products Store | ★★★★★ | Medium | Yes |
+| Sponsored / Affiliate | ★★★★★ | Very Low | Yes |
+| Paid Consultations | ★★★★☆ | Medium | No |
+| Premium Blog Content | ★★★★☆ | Low–Medium | Yes |
+| Freelance Services Page | ★★★☆☆ | Low | No |
+
 ## License
 
 MIT License - feel free to use this for your own portfolio!

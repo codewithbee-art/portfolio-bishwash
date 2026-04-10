@@ -3,7 +3,11 @@ const crypto = require('crypto');
 
 class DeviceProtection {
     constructor() {
-        // In-memory store for device tracking (in production, use Redis)
+        // In-memory store for device tracking.
+        // This resets on server restart, but that's acceptable because:
+        // 1. IP-based rate limits are persisted in SQLite via rate-limit-store.js
+        // 2. This tracker is a secondary layer for fingerprint-based spam detection
+        // 3. For high-traffic production, swap to Redis for persistence.
         this.deviceTracker = new Map();
         
         // Protection thresholds
@@ -180,11 +184,22 @@ class DeviceProtection {
         this.deviceTracker.set(fingerprint, data);
     }
 
-    // Verify CAPTCHA (placeholder for future implementation)
+    // Verify CAPTCHA — stub, not yet integrated with a real CAPTCHA provider.
+    // To enable: set RECAPTCHA_SECRET_KEY in .env and implement the verification call below.
     async verifyCaptcha(captchaResponse) {
-        // For now, always return true
-        // In future, integrate with reCAPTCHA or similar
-        return true;
+        const secret = process.env.RECAPTCHA_SECRET_KEY;
+        if (!secret) return false; // fail-closed: block if no key configured
+        try {
+            const res = await fetch(`https://www.google.com/recaptcha/api/siteverify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `secret=${secret}&response=${captchaResponse}`
+            });
+            const data = await res.json();
+            return data.success === true;
+        } catch {
+            return false;
+        }
     }
 
     // Get device statistics
@@ -215,6 +230,11 @@ class DeviceProtection {
                 this.deviceTracker.delete(fingerprint);
             }
         }
+    }
+
+    startCleanupInterval() {
+        // Run cleanup every hour to prevent unbounded memory growth
+        setInterval(() => this.cleanup(), 60 * 60 * 1000);
     }
 }
 

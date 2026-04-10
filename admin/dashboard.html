@@ -741,6 +741,12 @@
         let currentData = [];
         let editingId = null;
         
+        // HTML escape helper — prevents XSS in template literals
+        function esc(str) {
+            if (str == null) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+        
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
@@ -755,7 +761,7 @@
                 const res = await fetch('/api/auth/check');
                 const data = await res.json();
                 if (!data.isAuthenticated) {
-                    window.location.href = '/admin';
+                    window.location.href = window.location.pathname.replace('/dashboard', '');
                 }
             } catch (err) {
                 console.error('Auth check failed:', err);
@@ -862,7 +868,20 @@
         // Load overview for dashboard
         async function loadOverview() {
             try {
-                document.getElementById('table-head').style.display = '';
+                // Reset table header to standard layout (without message checkbox)
+                const tableHead = document.getElementById('table-head');
+                tableHead.style.display = '';
+                tableHead.innerHTML = `
+                    <tr>
+                        <th>Title</th>
+                        <th>Details</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+                // Hide bulk actions bar from messages
+                document.getElementById('bulk-actions').style.display = 'none';
+
                 const [exp, edu, proj] = await Promise.all([
                     fetch('/api/content/experience').then(r => r.json()),
                     fetch('/api/content/education').then(r => r.json()),
@@ -949,8 +968,8 @@
                     
                     return `
                         <tr>
-                            <td>${item.company || item.institution || item.title || 'Untitled'}</td>
-                            <td>${item.role || item.degree || (item.tags || []).join(', ') || ''}</td>
+                            <td>${esc(item.company || item.institution || item.title || 'Untitled')}</td>
+                            <td>${esc(item.role || item.degree || (item.tags || []).join(', ') || '')}</td>
                             <td><span class="badge ${item.hidden ? 'badge-hidden' : 'badge-visible'}">${item.hidden ? 'Hidden' : 'Visible'}</span></td>
                             <td class="actions">
                                 <button class="btn-icon-only" onclick="editOverviewItem('${item.id}', '${itemType}')">
@@ -970,10 +989,10 @@
                 if (currentSection === 'experience') {
                     return `
                         <tr>
-                            <td><strong>${item.company}</strong></td>
-                            <td>${item.role}<br><small>${item.period}</small></td>
+                            <td><strong>${esc(item.company)}</strong></td>
+                            <td>${esc(item.role)}<br><small>${esc(item.period)}</small></td>
                             <td>
-                                <span class="badge badge-visible">${item.badge || 'Work'}</span>
+                                <span class="badge badge-visible">${esc(item.badge || 'Work')}</span>
                                 ${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : ''}
                             </td>
                             <td class="actions">
@@ -992,10 +1011,10 @@
                 } else if (currentSection === 'education') {
                     return `
                         <tr>
-                            <td><strong>${item.institution}</strong></td>
-                            <td>${item.degree}<br><small>${item.period}</small></td>
+                            <td><strong>${esc(item.institution)}</strong></td>
+                            <td>${esc(item.degree)}<br><small>${esc(item.period)}</small></td>
                             <td>
-                                <span class="badge badge-visible">${item.badge || 'Education'}</span>
+                                <span class="badge badge-visible">${esc(item.badge || 'Education')}</span>
                                 ${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : ''}
                             </td>
                             <td class="actions">
@@ -1014,8 +1033,8 @@
                 } else if (currentSection === 'projects') {
                     return `
                         <tr>
-                            <td><strong>${item.title}</strong>${item.featured ? ' <span class="badge badge-work">Featured</span>' : ''}</td>
-                            <td>${(item.tags || []).join(', ')}</td>
+                            <td><strong>${esc(item.title)}</strong>${item.featured ? ' <span class="badge badge-work">Featured</span>' : ''}</td>
+                            <td>${esc((item.tags || []).join(', '))}</td>
                             <td>${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : '<span class="badge badge-visible">Visible</span>'}</td>
                             <td class="actions">
                                 <button class="btn-icon-only" onclick="editItem('${item.id}')">
@@ -1033,8 +1052,8 @@
                 } else if (currentSection === 'skills') {
                     return `
                         <tr>
-                            <td><strong>${item.name}</strong></td>
-                            <td>${item.category}<br><small>Level: ${item.level || 0}/100</small></td>
+                            <td><strong>${esc(item.name)}</strong></td>
+                            <td>${esc(item.category)}<br><small>Level: ${esc(item.level || 0)}/100</small></td>
                             <td>${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : '<span class="badge badge-visible">Visible</span>'}</td>
                             <td class="actions">
                                 <button class="btn-icon-only" onclick="editItem('${item.id}')">
@@ -1052,8 +1071,8 @@
                 } else if (currentSection === 'blog') {
                     return `
                         <tr>
-                            <td><strong>${item.title}</strong>${item.featured ? ' <span class="badge badge-work">Featured</span>' : ''}</td>
-                            <td>${item.excerpt ? item.excerpt.substring(0, 50) + '...' : 'No excerpt'}</td>
+                            <td><strong>${esc(item.title)}</strong>${item.featured ? ' <span class="badge badge-work">Featured</span>' : ''}</td>
+                            <td>${item.excerpt ? esc(item.excerpt.substring(0, 50)) + '...' : 'No excerpt'}</td>
                             <td>
                                 ${item.published ? '<span class="badge badge-visible">Published</span>' : '<span class="badge badge-hidden">Draft</span>'}
                                 ${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : ''}
@@ -1075,7 +1094,7 @@
                 
                 return `
                     <tr>
-                        <td>${item.title || 'Untitled'}</td>
+                        <td>${esc(item.title || 'Untitled')}</td>
                         <td>-</td>
                         <td>${item.hidden ? '<span class="badge badge-hidden">Hidden</span>' : '<span class="badge badge-visible">Visible</span>'}</td>
                         <td class="actions">
@@ -1131,6 +1150,7 @@
                     { name: 'company', label: 'Company', type: 'text', required: true },
                     { name: 'role', label: 'Role', type: 'text', required: true },
                     { name: 'period', label: 'Period', type: 'text', placeholder: 'e.g., 2020 - Present', required: true },
+                    { name: 'location', label: 'Location', type: 'text', placeholder: 'e.g., London, UK' },
                     { name: 'description', label: 'Description', type: 'textarea' },
                     { name: 'badge', label: 'Badge Tag', type: 'text', placeholder: 'e.g., Work, Internship, Apprenticeship' }
                 ],
@@ -1138,6 +1158,7 @@
                     { name: 'institution', label: 'Institution', type: 'text', required: true },
                     { name: 'degree', label: 'Degree', type: 'text', required: true },
                     { name: 'period', label: 'Period', type: 'text', placeholder: 'e.g., 2018 - 2022', required: true },
+                    { name: 'location', label: 'Location', type: 'text', placeholder: 'e.g., Kathmandu, Nepal' },
                     { name: 'description', label: 'Description', type: 'textarea' },
                     { name: 'badge', label: 'Badge Tag', type: 'text', placeholder: 'e.g., University, Bootcamp, Certification' }
                 ],
@@ -1153,6 +1174,7 @@
                 ],
                 blog: [
                     { name: 'title', label: 'Title', type: 'text', required: true },
+                    { name: 'author', label: 'Author Name', type: 'text', placeholder: 'e.g., Bishwash Acharya' },
                     { name: 'excerpt', label: 'Excerpt', type: 'textarea' },
                     { name: 'content', label: 'Content', type: 'textarea', required: true },
                     { name: 'tags', label: 'Tags (comma separated)', type: 'text' },
@@ -1282,6 +1304,11 @@
                 
                 if (fieldName === 'tags') {
                     formData[fieldName] = input.value.split(',').map(t => t.trim()).filter(t => t);
+                    // Validate max 8 tags for blog posts
+                    if (currentSection === 'blog' && formData[fieldName].length > 8) {
+                        showToast('Maximum 8 tags allowed. Please remove some tags.', 'error');
+                        return;
+                    }
                 } else if (fieldName === 'skills') {
                     formData[fieldName] = input.value.split(',').map(t => t.trim()).filter(t => t);
                 } else if (fieldName === 'level') {
@@ -1322,10 +1349,11 @@
                         loadContent(currentSection);
                     }
                 } else {
-                    throw new Error('Failed to save');
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Failed to save');
                 }
             } catch (err) {
-                showToast('Error saving item', 'error');
+                showToast(err.message || 'Error saving item', 'error');
             }
         }
         
@@ -1352,20 +1380,19 @@
         
         // Delete item
         async function deleteItem(id) {
-            if (!confirm('Are you sure? This cannot be undone.')) return;
-            
-            try {
-                const res = await fetch(`/api/content/${currentSection}/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (res.ok) {
-                    showToast('Item deleted!');
-                    loadContent(currentSection);
+            showConfirm('Are you sure? This cannot be undone.', async () => {
+                try {
+                    const res = await fetch(`/api/content/${currentSection}/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        showToast('Item deleted!');
+                        loadContent(currentSection);
+                    }
+                } catch (err) {
+                    showToast('Error deleting item', 'error');
                 }
-            } catch (err) {
-                showToast('Error deleting item', 'error');
-            }
+            });
         }
         
         // Load skills section
@@ -1405,10 +1432,10 @@
                 
                 tbody.innerHTML = skills.map(skill => `
                     <tr>
-                        <td><strong>${skill.category}</strong></td>
+                        <td><strong>${esc(skill.category)}</strong></td>
                         <td>
                             <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                                ${(skill.skills || []).map(s => `<span class="skill-tag" style="background: var(--accent); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${s}</span>`).join('')}
+                                ${(skill.skills || []).map(s => `<span class="skill-tag" style="background: var(--accent); color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">${esc(s)}</span>`).join('')}
                             </div>
                         </td>
                         <td>${skill.hidden ? '<span class="badge badge-hidden">Hidden</span>' : '<span class="badge badge-visible">Visible</span>'}</td>
@@ -1470,8 +1497,8 @@
                         <td>
                             <input type="checkbox" class="message-checkbox" value="${msg.id}" onchange="updateBulkActions()">
                         </td>
-                        <td><strong>${msg.name}</strong><br><small>${msg.email}</small></td>
-                        <td>${msg.subject || 'No subject'}<br><small>${msg.message.substring(0, 50)}...</small></td>
+                        <td><strong>${esc(msg.name)}</strong><br><small>${esc(msg.email)}</small></td>
+                        <td>${esc(msg.subject || 'No subject')}<br><small>${esc(msg.message.substring(0, 50))}...</small></td>
                         <td>${msg.read ? '<span class="badge badge-visible">Read</span>' : '<span class="badge badge-work">New</span>'}</td>
                         <td class="actions">
                             <button class="btn-icon-only" onclick="viewMessage('${msg.id}')">
@@ -1524,16 +1551,16 @@
         
         // Delete message
         async function deleteMessage(id) {
-            if (!confirm('Delete this message?')) return;
-            
-            try {
-                await fetch(`/api/contact/messages/${id}`, { method: 'DELETE' });
-                showToast('Message deleted');
-                loadMessages();
-                loadDashboard();
-            } catch (err) {
-                showToast('Error deleting message', 'error');
-            }
+            showConfirm('Delete this message?', async () => {
+                try {
+                    await fetch(`/api/contact/messages/${id}`, { method: 'DELETE' });
+                    showToast('Message deleted');
+                    loadMessages();
+                    loadDashboard();
+                } catch (err) {
+                    showToast('Error deleting message', 'error');
+                }
+            });
         }
         
         // Bulk operations
@@ -1567,25 +1594,22 @@
             
             if (ids.length === 0) return;
             
-            if (!confirm(`Delete ${ids.length} message${ids.length > 1 ? 's' : ''}? This action cannot be undone.`)) return;
-            
-            try {
-                await fetch('/api/contact/messages/bulk-delete', {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids })
-                });
-                
-                showToast(`${ids.length} message${ids.length > 1 ? 's' : ''} deleted`);
-                loadMessages();
-                loadDashboard();
-                
-                // Reset checkboxes
-                document.getElementById('select-all').checked = false;
-                updateBulkActions();
-            } catch (err) {
-                showToast('Error deleting messages', 'error');
-            }
+            showConfirm(`Delete ${ids.length} message${ids.length > 1 ? 's' : ''}? This action cannot be undone.`, async () => {
+                try {
+                    await fetch('/api/contact/messages/bulk-delete', {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ids })
+                    });
+                    showToast(`${ids.length} message${ids.length > 1 ? 's' : ''} deleted`);
+                    loadMessages();
+                    loadDashboard();
+                    document.getElementById('select-all').checked = false;
+                    updateBulkActions();
+                } catch (err) {
+                    showToast('Error deleting messages', 'error');
+                }
+            });
         }
         
         async function bulkMarkAsRead() {
@@ -1622,51 +1646,45 @@
                     <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 760px;">
                         <h3 style="margin-bottom: 20px; font-size: 18px; font-weight: 600;">Manage Hero Content</h3>
                         <div style="display: grid; gap: 16px;">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                <div>
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">First Name (before animation)</label>
-                                    <input type="text" id="hero-name-input" value="${settings.hero_name || ''}" placeholder="e.g., Bishwash" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Last Name (after animation)</label>
-                                    <input type="text" id="hero-lastname-input" value="${settings.hero_lastname || ''}" placeholder="e.g., Acharya" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
-                                </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 8px; font-weight: 600;">First Name</label>
+                                <input type="text" id="hero-name-input" value="${esc(settings.hero_name || '')}" placeholder="e.g., Bishwash" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Tagline</label>
-                                <input type="text" id="hero-tagline-input" value="${settings.hero_tagline || ''}" placeholder="e.g., Building clean, useful digital experiences" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="hero-tagline-input" value="${esc(settings.hero_tagline || '')}" placeholder="e.g., Building clean, useful digital experiences" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Roles (comma separated)</label>
-                                <input type="text" id="hero-roles-input" value="${settings.hero_roles || ''}" placeholder="Designer, Developer, Data/Business Analyst" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="hero-roles-input" value="${esc(settings.hero_roles || '')}" placeholder="Designer, Developer, Data/Business Analyst" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                 <div>
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Years of Experience</label>
-                                    <input type="text" id="hero-years-input" value="${settings.hero_years_experience || ''}" placeholder="e.g., 2+" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                    <input type="text" id="hero-years-input" value="${esc(settings.hero_years_experience || '')}" placeholder="e.g., 2+" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                                 </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Experience Label</label>
-                                    <input type="text" id="hero-years-label-input" value="${settings.hero_years_label || ''}" placeholder="e.g., Years Dev Experience" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                    <input type="text" id="hero-years-label-input" value="${esc(settings.hero_years_label || '')}" placeholder="e.g., Years Dev Experience" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                 <div>
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Value</label>
-                                    <input type="text" id="hero-education-value-input" value="${settings.hero_education_value || ''}" placeholder="e.g., MSc" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                    <input type="text" id="hero-education-value-input" value="${esc(settings.hero_education_value || '')}" placeholder="e.g., MSc" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                                 </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Label</label>
-                                    <input type="text" id="hero-education-label-input" value="${settings.hero_education_label || ''}" placeholder="e.g., Information Systems, UWL" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                    <input type="text" id="hero-education-label-input" value="${esc(settings.hero_education_label || '')}" placeholder="e.g., Information Systems, UWL" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                                 </div>
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Location Label</label>
-                                <input type="text" id="hero-location-input" value="${settings.hero_location || ''}" placeholder="e.g., Based in London, UK" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="hero-location-input" value="${esc(settings.hero_location || '')}" placeholder="e.g., Based in London, UK" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current CV URL</label>
-                                <input type="text" id="hero-cv-url-input" value="${settings.hero_cv_url || ''}" placeholder="/uploads/your-cv.pdf" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="hero-cv-url-input" value="${esc(settings.hero_cv_url || '')}" placeholder="/uploads/your-cv.pdf" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Upload CV (PDF/DOC/DOCX)</label>
@@ -1687,7 +1705,6 @@
             try {
                 const savePairs = [
                     ['hero_name', document.getElementById('hero-name-input').value],
-                    ['hero_lastname', document.getElementById('hero-lastname-input').value],
                     ['hero_tagline', document.getElementById('hero-tagline-input').value],
                     ['hero_roles', document.getElementById('hero-roles-input').value],
                     ['hero_years_experience', document.getElementById('hero-years-input').value],
@@ -1705,7 +1722,7 @@
                     const uploadRes = await fetch('/api/upload/admin', { method: 'POST', body: cvData });
                     if (uploadRes.ok) {
                         const uploaded = await uploadRes.json();
-                        savePairs.splice(9, 1, ['hero_cv_url', uploaded.url]);
+                        savePairs.splice(8, 1, ['hero_cv_url', uploaded.url]);
                     } else {
                         throw new Error('CV upload failed');
                     }
@@ -1736,60 +1753,60 @@
                         <div style="display: grid; gap: 16px;">
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Section Title</label>
-                                <input type="text" id="about-title-input" value="${settings.about_title || 'About Me'}" placeholder="e.g., About Me" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-title-input" value="${esc(settings.about_title || 'About Me')}" placeholder="e.g., About Me" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Paragraph 1</label>
-                                <textarea id="about-paragraph-1-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${settings.about_paragraph_1 || ''}</textarea>
+                                <textarea id="about-paragraph-1-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${esc(settings.about_paragraph_1 || '')}</textarea>
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Paragraph 2</label>
-                                <textarea id="about-paragraph-2-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${settings.about_paragraph_2 || ''}</textarea>
+                                <textarea id="about-paragraph-2-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${esc(settings.about_paragraph_2 || '')}</textarea>
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Paragraph 3</label>
-                                <textarea id="about-paragraph-3-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${settings.about_paragraph_3 || ''}</textarea>
+                                <textarea id="about-paragraph-3-input" style="width: 100%; min-height: 90px; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">${esc(settings.about_paragraph_3 || '')}</textarea>
                             </div>
                             <h4 style="margin-top: 12px; margin-bottom: 8px; font-size: 16px; font-weight: 600;">Timeline Nodes</h4>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Title</label>
-                                <input type="text" id="about-edu-title-input" value="${settings.about_edu_title || 'Education'}" placeholder="e.g., Education" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-edu-title-input" value="${esc(settings.about_edu_title || 'Education')}" placeholder="e.g., Education" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Description</label>
-                                <input type="text" id="about-edu-desc-input" value="${settings.about_edu_desc || 'MSc Information Systems'}" placeholder="e.g., MSc Information Systems" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-edu-desc-input" value="${esc(settings.about_edu_desc || 'MSc Information Systems')}" placeholder="e.g., MSc Information Systems" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Education Subtitle</label>
-                                <input type="text" id="about-edu-sub-input" value="${settings.about_edu_sub || 'University of West London'}" placeholder="e.g., University of West London" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-edu-sub-input" value="${esc(settings.about_edu_sub || 'University of West London')}" placeholder="e.g., University of West London" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Experience Title</label>
-                                <input type="text" id="about-exp-title-input" value="${settings.about_exp_title || 'Experience'}" placeholder="e.g., Experience" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-exp-title-input" value="${esc(settings.about_exp_title || 'Experience')}" placeholder="e.g., Experience" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Experience Description</label>
-                                <input type="text" id="about-exp-desc-input" value="${settings.about_exp_desc || 'Web Development & QA'}" placeholder="e.g., Web Development & QA" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-exp-desc-input" value="${esc(settings.about_exp_desc || 'Web Development & QA')}" placeholder="e.g., Web Development & QA" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Experience Subtitle</label>
-                                <input type="text" id="about-exp-sub-input" value="${settings.about_exp_sub || 'Innovate Tech'}" placeholder="e.g., Innovate Tech" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-exp-sub-input" value="${esc(settings.about_exp_sub || 'Innovate Tech')}" placeholder="e.g., Innovate Tech" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current Title</label>
-                                <input type="text" id="about-current-title-input" value="${settings.about_current_title || 'Current'}" placeholder="e.g., Current" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-current-title-input" value="${esc(settings.about_current_title || 'Current')}" placeholder="e.g., Current" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current Description</label>
-                                <input type="text" id="about-current-desc-input" value="${settings.about_current_desc || 'Data & Analytics'}" placeholder="e.g., Data & Analytics" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-current-desc-input" value="${esc(settings.about_current_desc || 'Data & Analytics')}" placeholder="e.g., Data & Analytics" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Current Subtitle</label>
-                                <input type="text" id="about-current-sub-input" value="${settings.about_current_sub || 'London, UK'}" placeholder="e.g., London, UK" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-current-sub-input" value="${esc(settings.about_current_sub || 'London, UK')}" placeholder="e.g., London, UK" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">About Image URL</label>
-                                <input type="text" id="about-image-url-input" value="${settings.about_image || ''}" placeholder="/uploads/about-image.jpg" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
+                                <input type="text" id="about-image-url-input" value="${esc(settings.about_image || '')}" placeholder="/uploads/about-image.jpg" style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary);">
                             </div>
                             <div>
                                 <label style="display: block; margin-bottom: 8px; font-weight: 600;">Upload About Image</label>
@@ -1866,31 +1883,37 @@
                         <div style="display: grid; gap: 20px;">
                             <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
                                 <label style="font-size: 14px; font-weight: 500;">LinkedIn</label>
-                                <input type="url" id="social_linkedin" value="${settings.social_linkedin || ''}" placeholder="https://linkedin.com/in/yourprofile"
+                                <input type="url" id="social_linkedin" value="${esc(settings.social_linkedin || '')}" placeholder="https://linkedin.com/in/yourprofile"
                                     style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
                             </div>
                             
                             <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
                                 <label style="font-size: 14px; font-weight: 500;">GitHub</label>
-                                <input type="url" id="social_github" value="${settings.social_github || ''}" placeholder="https://github.com/yourusername"
+                                <input type="url" id="social_github" value="${esc(settings.social_github || '')}" placeholder="https://github.com/yourusername"
                                     style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
                             </div>
                             
                             <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
                                 <label style="font-size: 14px; font-weight: 500;">YouTube</label>
-                                <input type="url" id="social_youtube" value="${settings.social_youtube || ''}" placeholder="https://youtube.com/yourchannel"
+                                <input type="url" id="social_youtube" value="${esc(settings.social_youtube || '')}" placeholder="https://youtube.com/yourchannel"
                                     style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
                             </div>
                             
                             <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
                                 <label style="font-size: 14px; font-weight: 500;">Twitter/X</label>
-                                <input type="url" id="social_twitter" value="${settings.social_twitter || ''}" placeholder="https://twitter.com/yourusername"
+                                <input type="url" id="social_twitter" value="${esc(settings.social_twitter || '')}" placeholder="https://twitter.com/yourusername"
                                     style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
                             </div>
                             
                             <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
                                 <label style="font-size: 14px; font-weight: 500;">Instagram</label>
-                                <input type="url" id="social_instagram" value="${settings.social_instagram || ''}" placeholder="https://instagram.com/yourusername"
+                                <input type="url" id="social_instagram" value="${esc(settings.social_instagram || '')}" placeholder="https://instagram.com/yourusername"
+                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                            </div>
+                            
+                            <div style="display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: center;">
+                                <label style="font-size: 14px; font-weight: 500;">Facebook</label>
+                                <input type="url" id="social_facebook" value="${esc(settings.social_facebook || '')}" placeholder="https://facebook.com/yourprofile"
                                     style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
                             </div>
                             
@@ -1907,7 +1930,7 @@
                     try {
                         const socialLinks = [
                             'social_linkedin', 'social_github', 'social_youtube', 
-                            'social_twitter', 'social_instagram'
+                            'social_twitter', 'social_instagram', 'social_facebook'
                         ];
                         
                         const savePairs = socialLinks.map(key => {
@@ -1965,85 +1988,107 @@
                 const smtpPassSet = settings.smtp_app_password ? true : false;
 
                 renderCustomPanel('Security Settings', `
-                    <div style="display: grid; gap: 24px; max-width: 500px;">
+                    <div style="max-width: 560px;">
 
-                    <!-- Email Configuration -->
-                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
-                        <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Email Configuration</h3>
-                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-                            Configure your Gmail SMTP for sending contact notifications and password reset emails.
-                            <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--accent);">Get an App Password here</a>
-                            (requires 2-Step Verification enabled).
-                        </p>
-                        <div style="display: grid; gap: 12px;">
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Gmail Address (sender)</label>
-                                <input type="email" id="smtp-user" value="${smtpUser}" placeholder="your-gmail@gmail.com"
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                    <!-- Tab Navigation -->
+                    <div style="display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 24px;">
+                        <button class="settings-tab active" onclick="switchSettingsTab('email', this)"
+                            style="padding: 10px 20px; background: none; border: none; border-bottom: 2px solid var(--accent); margin-bottom: -2px; color: var(--accent); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            Email Config
+                        </button>
+                        <button class="settings-tab" onclick="switchSettingsTab('account', this)"
+                            style="padding: 10px 20px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            Admin Account
+                        </button>
+                        <button class="settings-tab" onclick="switchSettingsTab('password', this)"
+                            style="padding: 10px 20px; background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -2px; color: var(--text-muted); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            Change Password
+                        </button>
+                    </div>
+
+                    <!-- Tab: Email Configuration -->
+                    <div id="settings-tab-email" class="settings-tab-panel" style="display: block;">
+                        <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                            <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Email Configuration</h3>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                                Configure your Gmail SMTP for sending contact notifications and password reset emails.
+                                <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color: var(--accent);">Get an App Password here</a>
+                                (requires 2-Step Verification enabled).
+                            </p>
+                            <div style="display: grid; gap: 12px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Gmail Address (sender)</label>
+                                    <input type="email" id="smtp-user" value="${esc(smtpUser)}" placeholder="your-gmail@gmail.com"
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">App Password</label>
+                                    <input type="password" id="smtp-app-password" placeholder="${smtpPassSet ? 'Password is set (enter new to change)' : 'Enter 16-char App Password'}"
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Leave blank to keep current password. Google Account \u2192 Security \u2192 App Passwords.</p>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Recovery Email (where reset codes are sent)</label>
+                                    <input type="email" id="recovery-email" value="${esc(recoveryEmail)}" placeholder="your-recovery@email.com"
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">If empty, reset codes go to the Gmail address above.</p>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveEmailConfig()">Save Email Configuration</button>
+                                <button class="btn btn-secondary" onclick="testEmailConfig()" style="font-size: 13px;">Send Test Email</button>
                             </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">App Password</label>
-                                <input type="password" id="smtp-app-password" placeholder="${smtpPassSet ? 'Password is set (enter new to change)' : 'Enter 16-char App Password'}"
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
-                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Leave blank to keep current password. Google Account \u2192 Security \u2192 App Passwords.</p>
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Recovery Email (where reset codes are sent)</label>
-                                <input type="email" id="recovery-email" value="${recoveryEmail}" placeholder="your-recovery@email.com"
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
-                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">If empty, reset codes go to the Gmail address above.</p>
-                            </div>
-                            <button class="btn btn-primary" onclick="saveEmailConfig()">Save Email Configuration</button>
-                            <button class="btn btn-secondary" onclick="testEmailConfig()" style="font-size: 13px;">Send Test Email</button>
                         </div>
                     </div>
 
-                    <!-- Admin Account -->
-                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
-                        <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Admin Account</h3>
-                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Change your login username. You can use an email address or any name you prefer.</p>
-                        <div style="display: grid; gap: 12px;">
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Current Username</label>
-                                <input type="text" id="current-username-display" value="${currentUsername}" disabled
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-muted); font-size: 14px; opacity: 0.7;">
+                    <!-- Tab: Admin Account -->
+                    <div id="settings-tab-account" class="settings-tab-panel" style="display: none;">
+                        <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                            <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Admin Account</h3>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Change your login username. You can use an email address or any name you prefer.</p>
+                            <div style="display: grid; gap: 12px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Current Username</label>
+                                    <input type="text" id="current-username-display" value="${esc(currentUsername)}" disabled
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-muted); font-size: 14px; opacity: 0.7;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">New Username</label>
+                                    <input type="text" id="new-username" placeholder="Enter new username or email"
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Letters, numbers, dots, hyphens, underscores, and @ allowed.</p>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Confirm with Password</label>
+                                    <input type="password" id="username-change-password" placeholder="Enter your current password"
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                </div>
+                                <button class="btn btn-primary" onclick="changeUsername()" style="margin-top: 4px;">Change Username</button>
                             </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">New Username</label>
-                                <input type="text" id="new-username" placeholder="Enter new username or email"
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
-                                <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Letters, numbers, dots, hyphens, underscores, and @ allowed.</p>
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Confirm with Password</label>
-                                <input type="password" id="username-change-password" placeholder="Enter your current password"
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
-                            </div>
-                            <button class="btn btn-primary" onclick="changeUsername()" style="margin-top: 4px;">Change Username</button>
                         </div>
                     </div>
 
-                    <!-- Change Password -->
-                    <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
-                        <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Change Password</h3>
-                        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Update your admin login password. This is saved securely in the database.</p>
-                        <div style="display: grid; gap: 12px;">
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Current Password</label>
-                                <input type="password" id="current-password" placeholder="Enter current password"
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                    <!-- Tab: Change Password -->
+                    <div id="settings-tab-password" class="settings-tab-panel" style="display: none;">
+                        <div style="padding: 24px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                            <h3 style="margin-bottom: 6px; font-size: 18px; font-weight: 600;">Change Password</h3>
+                            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Update your admin login password. This is saved securely in the database.</p>
+                            <div style="display: grid; gap: 12px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Current Password</label>
+                                    <input type="password" id="current-password" placeholder="Enter current password"
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">New Password</label>
+                                    <input type="password" id="new-password" placeholder="Enter new password"
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Confirm New Password</label>
+                                    <input type="password" id="confirm-password" placeholder="Confirm new password"
+                                        style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
+                                </div>
+                                <button class="btn btn-primary" onclick="changePassword()" style="margin-top: 4px;">Change Password</button>
                             </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">New Password</label>
-                                <input type="password" id="new-password" placeholder="Enter new password"
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Confirm New Password</label>
-                                <input type="password" id="confirm-password" placeholder="Confirm new password"
-                                    style="width: 100%; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 4px; color: var(--text-primary); font-size: 14px;">
-                            </div>
-                            <button class="btn btn-primary" onclick="changePassword()" style="margin-top: 4px;">Change Password</button>
                         </div>
                     </div>
 
@@ -2052,6 +2097,26 @@
             } catch (err) {
                 console.error('Settings load error:', err);
                 showToast(err.message || 'Error loading settings', 'error');
+            }
+        }
+
+        // Switch between settings tabs
+        function switchSettingsTab(tabName, btn) {
+            // Hide all tab panels
+            document.querySelectorAll('.settings-tab-panel').forEach(p => p.style.display = 'none');
+            // Show selected panel
+            const panel = document.getElementById('settings-tab-' + tabName);
+            if (panel) panel.style.display = 'block';
+            // Update tab button styles
+            document.querySelectorAll('.settings-tab').forEach(t => {
+                t.style.borderBottomColor = 'transparent';
+                t.style.color = 'var(--text-muted)';
+                t.classList.remove('active');
+            });
+            if (btn) {
+                btn.style.borderBottomColor = 'var(--accent)';
+                btn.style.color = 'var(--accent)';
+                btn.classList.add('active');
             }
         }
 
@@ -2169,8 +2234,8 @@
                 return;
             }
             
-            if (newPassword.length < 6) {
-                showToast('Password must be at least 6 characters long', 'error');
+            if (newPassword.length < 8) {
+                showToast('Password must be at least 8 characters long', 'error');
                 return;
             }
             
@@ -2223,32 +2288,50 @@
         
         // Delete overview item
         async function deleteOverviewItem(id, type) {
-            if (!confirm('Are you sure? This cannot be undone.')) return;
-            
-            try {
-                const res = await fetch(`/api/content/${type}/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (res.ok) {
-                    showToast('Item deleted!');
-                    loadOverview();
+            showConfirm('Are you sure? This cannot be undone.', async () => {
+                try {
+                    const res = await fetch(`/api/content/${type}/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        showToast('Item deleted!');
+                        loadOverview();
+                    }
+                } catch (err) {
+                    showToast('Error deleting item', 'error');
                 }
-            } catch (err) {
-                showToast('Error deleting item', 'error');
-            }
+            });
         }
         
         // Logout
         async function logout() {
             try {
                 await fetch('/api/auth/logout', { method: 'POST' });
-                window.location.href = '/admin';
+                window.location.href = window.location.pathname.replace('/dashboard', '');
             } catch (err) {
                 showToast('Error logging out', 'error');
             }
         }
         
+        // Custom confirm dialog (replaces browser confirm())
+        function showConfirm(message, onConfirm, confirmLabel = 'Delete') {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            overlay.innerHTML = `
+                <div style="background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:28px 32px;max-width:400px;width:90%;text-align:center;">
+                    <p style="color:#e5e7eb;font-size:15px;margin:0 0 24px;line-height:1.5;">${message}</p>
+                    <div style="display:flex;gap:12px;justify-content:center;">
+                        <button id="confirm-cancel" style="padding:8px 20px;border-radius:8px;border:1px solid #444;background:transparent;color:#9ca3af;cursor:pointer;font-size:14px;">Cancel</button>
+                        <button id="confirm-ok" style="padding:8px 20px;border-radius:8px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-size:14px;font-weight:600;">${confirmLabel}</button>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+            const close = () => document.body.removeChild(overlay);
+            overlay.querySelector('#confirm-cancel').addEventListener('click', close);
+            overlay.querySelector('#confirm-ok').addEventListener('click', () => { close(); onConfirm(); });
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+        }
+
         // Show toast notification
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');

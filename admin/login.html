@@ -229,6 +229,131 @@
             text-align: center;
             word-break: break-all;
         }
+
+        /* Inline form message */
+        .form-message {
+            display: none;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            text-align: left;
+            line-height: 1.5;
+        }
+        .form-message.error {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+        .form-message.success {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .form-message-icon {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* Toast notification */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            pointer-events: all;
+            min-width: 280px;
+            max-width: 380px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            animation: toastIn 0.3s ease;
+            line-height: 1.5;
+        }
+        .toast.success {
+            background: rgba(0, 212, 170, 0.12);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .toast.error {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #f87171;
+        }
+        .toast.info {
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            color: #a5b4fc;
+        }
+        .toast-icon { flex-shrink: 0; margin-top: 1px; }
+        .toast-text { flex: 1; }
+        .toast-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.6;
+            font-size: 16px;
+            padding: 0;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .toast-close:hover { opacity: 1; }
+        .toast.hiding { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(0); }
+            to   { opacity: 0; transform: translateX(40px); }
+        }
+
+        /* Login button loading state */
+        .btn[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+        /* Password toggle wrapper */
+        .password-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-wrapper .form-input {
+            padding-right: 46px;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: color 0.2s ease;
+        }
+        .password-toggle:hover { color: var(--accent); }
+        .password-toggle svg { display: block; }
     </style>
 </head>
 <body>
@@ -245,27 +370,39 @@
                 </div>
                 <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" autocomplete="current-password" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" class="form-input" placeholder="Enter password" autocomplete="current-password" required>
+                        <button type="button" class="password-toggle" data-target="password" aria-label="Toggle password visibility">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </button>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">
+                <div class="form-message" id="login-message">
+                    <span class="form-message-icon" id="login-message-icon"></span>
+                    <span id="login-message-text"></span>
+                </div>
+                <button type="submit" class="btn btn-primary" id="login-btn">
                     <span>Login</span>
                 </button>
-                <button type="button" class="forgot-password-link" onclick="openForgotPasswordModal()">
+                <button type="button" class="forgot-password-link" id="forgot-password-btn">
                     Forgot Password?
                 </button>
             </form>
             
-            <a href="../index.html" class="back-link">
+            <a href="/" class="back-link">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
                 Back to Portfolio
             </a>
         </div>
     </section>
 
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
     <!-- Forgot Password Modal -->
     <div class="modal-overlay" id="forgot-password-modal">
         <div class="reset-modal">
-            <button class="modal-close" onclick="closeForgotPasswordModal()">×</button>
+            <button class="modal-close" id="modal-close-btn">×</button>
             <h2 style="margin-bottom: 8px;">Reset Password</h2>
             <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 14px;">Enter your username to receive a password reset code</p>
             
@@ -274,7 +411,7 @@
                     <label for="reset-username">Username</label>
                     <input type="text" id="reset-username" class="form-input" placeholder="Enter your username" required>
                 </div>
-                <button type="button" class="btn btn-primary" onclick="requestPasswordReset()">Request Reset Code</button>
+                <button type="button" class="btn btn-primary" id="request-reset-btn">Request Reset Code</button>
             </div>
             
             <div id="reset-code-section" style="display: none; margin-top: 24px;">
@@ -288,9 +425,14 @@
                     </div>
                     <div class="form-group">
                         <label for="reset-new-password">New Password</label>
-                        <input type="password" id="reset-new-password" class="form-input" placeholder="Enter new password" required>
+                        <div class="password-wrapper">
+                            <input type="password" id="reset-new-password" class="form-input" placeholder="Enter new password" required>
+                            <button type="button" class="password-toggle" data-target="reset-new-password" aria-label="Toggle password visibility">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
+                        </div>
                     </div>
-                    <button type="button" class="btn btn-primary" onclick="submitPasswordReset()">Reset Password</button>
+                    <button type="button" class="btn btn-primary" id="submit-reset-btn">Reset Password</button>
                 </div>
                 <p style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-top: 12px;">
                     Code expires in 15 minutes
@@ -300,7 +442,62 @@
     </div>
 
     <script>
-        // Forgot password modal functions
+        // ── Toast notification system ──────────────────────────────────────
+        function showToast(message, type = 'info', duration = 4000) {
+            const icons = {
+                success: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+                error:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>',
+                info:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="8"/></svg>'
+            };
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const iconEl = document.createElement('span');
+            iconEl.className = 'toast-icon';
+            iconEl.innerHTML = icons[type] || icons.info;
+            const textEl = document.createElement('span');
+            textEl.className = 'toast-text';
+            textEl.textContent = message;
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'toast-close';
+            closeBtn.textContent = '×';
+            closeBtn.addEventListener('click', () => dismissToast(toast));
+            toast.appendChild(iconEl);
+            toast.appendChild(textEl);
+            toast.appendChild(closeBtn);
+            container.appendChild(toast);
+            if (duration > 0) {
+                setTimeout(() => dismissToast(toast), duration);
+            }
+            return toast;
+        }
+
+        function dismissToast(toast) {
+            if (!toast || toast.classList.contains('hiding')) return;
+            toast.classList.add('hiding');
+            setTimeout(() => toast.remove(), 300);
+        }
+
+        // ── Inline login form message ──────────────────────────────────────
+        function showLoginMessage(message, type = 'error') {
+            const box  = document.getElementById('login-message');
+            const icon = document.getElementById('login-message-icon');
+            const text = document.getElementById('login-message-text');
+            const icons = {
+                error:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12" y2="16"/></svg>',
+                success: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+            };
+            box.className = `form-message ${type}`;
+            icon.innerHTML = icons[type] || '';
+            text.textContent = message;
+        }
+
+        function clearLoginMessage() {
+            const box = document.getElementById('login-message');
+            box.className = 'form-message';
+        }
+
+        // ── Forgot password modal ──────────────────────────────────────────
         function openForgotPasswordModal() {
             document.getElementById('forgot-password-modal').classList.add('active');
             document.getElementById('reset-username').value = '';
@@ -311,108 +508,132 @@
             document.getElementById('forgot-password-modal').classList.remove('active');
         }
 
-        // Request password reset code
         async function requestPasswordReset() {
-            const username = document.getElementById('reset-username').value;
-            
+            const username = document.getElementById('reset-username').value.trim();
             if (!username) {
-                alert('Please enter your username');
+                showToast('Please enter your username', 'error');
                 return;
             }
-            
             try {
-                const res = await fetch('/api/auth/request-password-reset', {
+                const res  = await fetch('/api/auth/request-password-reset', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username })
                 });
-                
                 const data = await res.json();
-                
                 if (res.ok && data.success) {
                     const masked = data.maskedEmail || 'your email';
-                    document.getElementById('reset-info-msg').innerHTML = 
+                    document.getElementById('reset-info-msg').innerHTML =
                         `✉️ Reset code sent to <strong>${masked}</strong>. Check your inbox and enter it below.`;
                     document.getElementById('reset-code-section').style.display = 'block';
-                    
-                    // Auto-close after 15 minutes
+                    showToast(`Reset code sent to ${masked}`, 'success');
                     setTimeout(() => {
                         if (document.getElementById('forgot-password-modal').classList.contains('active')) {
                             closeForgotPasswordModal();
-                            alert('Reset code expired. Please request a new one.');
+                            showToast('Reset code expired. Please request a new one.', 'info');
                         }
                     }, 15 * 60 * 1000);
                 } else {
-                    alert(data.error || 'Error requesting password reset');
+                    showToast(data.error || 'Error requesting password reset', 'error');
                 }
             } catch (err) {
-                alert('Error connecting to server');
+                showToast('Error connecting to server', 'error');
             }
         }
 
-        // Submit password reset with code + new password
         async function submitPasswordReset() {
-            const resetCode = document.getElementById('reset-code-input').value.trim().toUpperCase();
+            const resetCode   = document.getElementById('reset-code-input').value.trim().toUpperCase();
             const newPassword = document.getElementById('reset-new-password').value;
-            
             if (!resetCode || !newPassword) {
-                alert('Please enter both the reset code and a new password');
+                showToast('Please enter both the reset code and a new password', 'error');
                 return;
             }
-            if (newPassword.length < 6) {
-                alert('Password must be at least 6 characters');
+            if (newPassword.length < 8) {
+                showToast('Password must be at least 8 characters', 'error');
                 return;
             }
-            
             try {
-                const res = await fetch('/api/auth/reset-password', {
+                const res  = await fetch('/api/auth/reset-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ resetCode, newPassword })
                 });
-                
                 const data = await res.json();
-                
                 if (res.ok && data.success) {
-                    alert('Password reset successfully! You can now login with your new password.');
+                    showToast('Password reset successfully! You can now log in.', 'success');
                     closeForgotPasswordModal();
                 } else {
-                    alert(data.error || 'Failed to reset password');
+                    showToast(data.error || 'Failed to reset password', 'error');
                 }
             } catch (err) {
-                alert('Error connecting to server');
+                showToast('Error connecting to server', 'error');
             }
         }
 
-        // Close modal when clicking outside
-        document.getElementById('forgot-password-modal')?.addEventListener('click', (e) => {
-            if (e.target.id === 'forgot-password-modal') {
-                closeForgotPasswordModal();
-            }
+        // Wire up all modal buttons via addEventListener (CSP-safe, no onclick attributes)
+        document.getElementById('forgot-password-btn').addEventListener('click', openForgotPasswordModal);
+        document.getElementById('modal-close-btn').addEventListener('click', closeForgotPasswordModal);
+        document.getElementById('request-reset-btn').addEventListener('click', requestPasswordReset);
+        document.getElementById('submit-reset-btn').addEventListener('click', submitPasswordReset);
+
+        // Close modal on backdrop click
+        document.getElementById('forgot-password-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'forgot-password-modal') closeForgotPasswordModal();
         });
 
+        // ── Login form submit ──────────────────────────────────────────────
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const username = document.getElementById('username').value;
+            clearLoginMessage();
+            const btn      = document.getElementById('login-btn');
+            const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
-            
+
+            btn.disabled = true;
+            btn.innerHTML = '<span>Logging in…</span>';
+
             try {
-                const res = await fetch('/api/auth/login', {
+                const res  = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
-                
                 const data = await res.json();
-                
                 if (res.ok) {
-                    window.location.href = '/admin/dashboard';
+                    btn.innerHTML = '<span>✓ Redirecting…</span>';
+                    window.location.href = window.location.pathname.replace(/\/login\.html$/, '').replace(/\/$/, '') + '/dashboard';
                 } else {
-                    alert(data.error || 'Login failed');
+                    showLoginMessage(data.error || 'Login failed. Check your credentials.');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Login</span>';
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
                 }
             } catch (err) {
-                alert('Error connecting to server');
+                showLoginMessage('Cannot connect to server. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = '<span>Login</span>';
             }
+        });
+
+        // Clear error message when user starts typing again
+        ['username', 'password'].forEach(id => {
+            document.getElementById(id).addEventListener('input', clearLoginMessage);
+        });
+
+        // ── Password visibility toggle ─────────────────────────────────────
+        const eyeOpen = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        const eyeOff  = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+        document.querySelectorAll('.password-toggle').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById(btn.dataset.target);
+                if (!input) return;
+                const showing = input.type === 'text';
+                input.type = showing ? 'password' : 'text';
+                btn.innerHTML = showing ? eyeOpen : eyeOff;
+                btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+            });
         });
     </script>
 </body>

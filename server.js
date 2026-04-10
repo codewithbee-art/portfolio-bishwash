@@ -2,29 +2,99 @@ require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const cors = require('cors');
 const { initialize } = require('./database/db');
+const SQLiteRateLimitStore = require('./api/rate-limit-store');
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+const ADMIN_PATH = process.env.ADMIN_PATH || '/admin';
 
-// Trust proxy for Render's load balancer
-app.set('trust proxy', 1);
+// Trust proxy only in production (behind Render/Heroku reverse proxy)
+// In dev, disable to prevent IP spoofing via X-Forwarded-For headers
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
 
-// Security headers
+    // Redirect HTTP → HTTPS in production
+    app.use((req, res, next) => {
+        if (req.header('x-forwarded-proto') !== 'https') {
+            return res.redirect(301, `https://${req.header('host')}${req.url}`);
+        }
+        next();
+    });
+}
+
+// Generate a fresh CSP nonce for every request
+app.use((req, res, next) => {
+    res.locals.cspNonce = require('crypto').randomBytes(16).toString('base64');
+    next();
+});
+
+// Security headers — scriptSrc uses per-request nonce (no unsafe-inline)
 app.use(helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", (req, res) => `'nonce-${res.locals.cspNonce}'`, "https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net", "https://unpkg.com"],
+            scriptSrcAttr: ["'unsafe-inline'"], // Required by admin dashboard onclick handlers (admin-only, auth-protected)
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https:"],
+            connectSrc: ["'self'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"]
+        }
+    },
     crossOriginEmbedderPolicy: false
+}));
+
+// Helper: read an HTML file, inject nonce onto inline <script> tags, and send it.
+// Matches <script> and <script type="..."> but skips ld+json and already-nonced tags.
+function sendNoncedHtml(res, filePath) {
+    fs.readFile(filePath, 'utf8', (err, html) => {
+        if (err) return res.status(500).send('Error loading page');
+        const nonce = res.locals.cspNonce;
+        // Replace opening <script> tags that have no nonce and no src (inline scripts)
+        // and are not JSON-LD blocks
+        const injected = html.replace(/<script([ \t][^>]*)?>(?!--)/g, (match, attrs) => {
+            attrs = attrs || '';
+            if (attrs.includes('nonce=')) return match;
+            if (attrs.includes('application/ld+json')) return match;
+            if (attrs.includes(' src=')) return match;
+            return `<script${attrs} nonce="${nonce}">`;
+        });
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(injected);
+    });
+}
+
+// CORS — restrictive in production, permissive in development
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production'
+        ? process.env.ALLOWED_ORIGIN || false
+        : [/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/],
+    credentials: true
 }));
 
 // Middleware
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-app.use(express.static(path.join(__dirname)));
+
+// Serve index.html explicitly so the nonce gets injected before static middleware claims it
+app.get('/', (req, res) => {
+    sendNoncedHtml(res, path.join(__dirname, 'index.html'));
+});
+
+// Serve only public-facing directories (never the project root — that exposes server source code)
+app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/js', express.static(path.join(__dirname, 'js')));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 // Rate limiting configurations
 const authLimiter = rateLimit({
@@ -33,25 +103,39 @@ const authLimiter = rateLimit({
     message: 'Too many login attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
+    store: new SQLiteRateLimitStore({ prefix: 'auth:' }),
     skip: (req) => req.method !== 'POST' // Only rate limit POST requests
 });
 
-// Contact form - no rate limiting for portfolio (unlimited submissions)
-// const contactLimiter = rateLimit({
-//     windowMs: 60 * 60 * 1000, // 1 hour
-//     max: 50, // Limit each IP to 50 contact form submissions per hour (increased for testing)
-//     message: 'Too many contact submissions, please try again later',
-//     standardHeaders: true,
-//     legacyHeaders: false,
-//     skip: (req) => req.method !== 'POST'
-// });
+// Contact form rate limiting — 5 submissions per hour per IP
+const contactLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5,
+    message: { error: 'Too many messages sent. Please try again in an hour.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: new SQLiteRateLimitStore({ prefix: 'contact:' }),
+    skip: (req) => req.method !== 'POST'
+});
+
+// Password reset code verification — stricter limit (3 attempts per 15 min)
+const resetCodeLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 3,
+    message: { error: 'Too many reset attempts. Please try again in 15 minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: new SQLiteRateLimitStore({ prefix: 'resetcode:' }),
+    skip: (req) => req.method !== 'POST'
+});
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // Limit each IP to 1000 API requests per 15 minutes (very lenient)
     standardHeaders: true,
     legacyHeaders: false,
-    skip: (req) => req.method === 'GET' || req.path.includes('/contact') // Skip GET requests and contact form
+    store: new SQLiteRateLimitStore({ prefix: 'api:' }),
+    skip: (req) => req.method === 'GET' // Skip GET requests only
 });
 
 // File upload configuration
@@ -65,7 +149,15 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+        // Use mimetype-derived extension, never trust originalname for extension
+        const mimeToExt = {
+            'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/png': '.png',
+            'image/gif': '.gif', 'image/webp': '.webp',
+            'application/pdf': '.pdf', 'application/msword': '.doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx'
+        };
+        const safeExt = mimeToExt[file.mimetype] || '.bin';
+        cb(null, file.fieldname + '-' + uniqueSuffix + safeExt);
     }
 });
 
@@ -91,8 +183,14 @@ const upload = multer({
     }
 });
 
-// Session setup
+// Session setup — SQLite-backed store so sessions survive server restarts
 app.use(session({
+    name: '_sid', // Custom cookie name — avoids default 'connect.sid' which fingerprints Express
+    store: new SQLiteStore({
+        db: 'sessions.db',
+        dir: path.join(__dirname, 'database'),
+        concurrentDB: true
+    }),
     secret: process.env.SESSION_SECRET || (() => {
         console.error('⚠️ ERROR: SESSION_SECRET environment variable is not set!');
         if (process.env.NODE_ENV === 'production') {
@@ -105,7 +203,7 @@ app.use(session({
     cookie: {
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         httpOnly: true, // Prevent JavaScript from accessing the session cookie
-        sameSite: 'Strict', // CSRF protection
+        sameSite: process.env.NODE_ENV === 'production' ? 'Strict' : 'Lax', // Lax in dev so proxied previews work
         maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
 }));
@@ -128,8 +226,16 @@ const csrfProtection = (req, res, next) => {
         'http://localhost:3000',
         'http://localhost:5500',
         'http://127.0.0.1:3000',
+        'http://127.0.0.1:5500',
         process.env.ALLOWED_ORIGIN
     ].filter(Boolean);
+
+    // Allow any localhost or 127.0.0.1 origin in development
+    if (process.env.NODE_ENV !== 'production' && origin) {
+        if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+            return next();
+        }
+    }
     
     // In production, only allow HTTPS
     if (process.env.NODE_ENV === 'production') {
@@ -169,37 +275,69 @@ const csrfProtection = (req, res, next) => {
 
 app.use('/api', csrfProtection);
 
-// Initialize database
-initialize();
-
 // Apply rate limiting to sensitive routes only
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/request-password-reset', authLimiter);
-app.use('/api/auth/reset-password', authLimiter);
-// Contact form has no rate limiting - unlimited submissions for portfolio
+app.use('/api/auth/reset-password', resetCodeLimiter);
+// Apply contact form rate limiting
+app.use('/api/contact', contactLimiter);
 
 // Apply general API rate limiting
 app.use('/api', apiLimiter);
 
 // API Routes
-app.use('/api/auth', require('./api/auth'));
+const authRouter = require('./api/auth');
+app.use('/api/auth', authRouter);
 app.use('/api/content', require('./api/content'));
 app.use('/api/contact', require('./api/contact'));
 
 // Serve uploaded files with fallback
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+// Block direct access to sensitive document types — force download via /download/cv
+app.use('/uploads', (req, res, next) => {
+    const ext = path.extname(req.path).toLowerCase();
+    if (['.pdf', '.doc', '.docx'].includes(ext)) {
+        return res.status(403).send('Direct access to documents is not allowed');
+    }
+    next();
+}, express.static(path.join(__dirname, 'uploads'), {
     maxAge: '1d', // Cache for 1 day
-    setHeaders: (res, path) => {
+    setHeaders: (res, filePath) => {
         // Add fallback for missing images
-        if (path.endsWith('.jpg') || path.endsWith('.png') || path.endsWith('.webp')) {
+        if (filePath.endsWith('.jpg') || filePath.endsWith('.png') || filePath.endsWith('.webp')) {
             res.on('finish', () => {
                 if (res.statusCode === 404) {
-                    console.log('Missing uploaded file:', path);
+                    console.log('Missing uploaded file:', filePath);
                 }
             });
         }
     }
 }));
+
+// CV download route - forces browser to download rather than open inline
+app.get('/download/cv', (req, res) => {
+    const { db } = require('./database/db');
+    db.get("SELECT value FROM settings WHERE key = 'hero_cv_url'", [], (err, row) => {
+        if (err || !row || !row.value) {
+            return res.status(404).send('CV not available');
+        }
+        const cvUrl = row.value;
+        // cvUrl is a relative path like /uploads/filename.pdf
+        const cvPath = path.resolve(__dirname, cvUrl.replace(/^\//, ''));
+        // Prevent directory traversal — resolved path must stay inside the uploads folder
+        const uploadsDir = path.resolve(__dirname, 'uploads');
+        if (!cvPath.startsWith(uploadsDir + path.sep) && cvPath !== uploadsDir) {
+            return res.status(403).send('Invalid CV path');
+        }
+        if (!fs.existsSync(cvPath)) {
+            return res.status(404).send('CV file not found');
+        }
+        const ext = path.extname(cvPath) || '.pdf';
+        const filename = `Bishwash_Acharya_Data_Science_Resume${ext}`;
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.sendFile(cvPath);
+    });
+});
 
 // File upload routes - PROTECTED: admin only
 app.post('/api/upload', (req, res, next) => {
@@ -229,38 +367,41 @@ app.post('/api/upload/admin', (req, res, next) => {
     res.json({ url: `/uploads/${req.file.filename}` });
 });
 
-// Admin routes - serve admin files
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin', 'login.html'));
+// Admin routes - serve admin files (path is configurable via ADMIN_PATH env var)
+app.get(ADMIN_PATH, (req, res) => {
+    sendNoncedHtml(res, path.join(__dirname, 'admin', 'login.html'));
 });
 
-app.get('/admin/dashboard', (req, res) => {
+app.get(`${ADMIN_PATH}/dashboard`, (req, res) => {
     if (!req.session.isAdmin) {
-        return res.redirect('/admin');
+        return res.redirect(ADMIN_PATH);
     }
-    res.sendFile(path.join(__dirname, 'admin', 'dashboard.html'));
+    sendNoncedHtml(res, path.join(__dirname, 'admin', 'dashboard.html'));
 });
 
 // Protected admin assets
-app.use('/admin', (req, res, next) => {
+app.use(ADMIN_PATH, (req, res, next) => {
     // Allow login page and assets
     if (req.path === '/' || req.path === '/login.html' || req.path.startsWith('/css')) {
         return next();
     }
     // Check auth for other admin pages
     if (!req.session.isAdmin) {
-        return res.redirect('/admin');
+        return res.redirect(ADMIN_PATH);
     }
     next();
 });
 
+// Redirect /favicon.ico to the SVG favicon to prevent 404s
+app.get('/favicon.ico', (req, res) => res.redirect(301, '/assets/favicon.svg'));
+
 // Blog routes
 app.get('/blogs', (req, res) => {
-    res.sendFile(path.join(__dirname, 'blog-list.html'));
+    sendNoncedHtml(res, path.join(__dirname, 'blog-list.html'));
 });
 
 app.get('/blog/:id', (req, res) => {
-    res.sendFile(path.join(__dirname, 'blog-detail.html'));
+    sendNoncedHtml(res, path.join(__dirname, 'blog-detail.html'));
 });
 
 // Projects routes
@@ -269,13 +410,14 @@ app.get('/projects', (req, res) => {
 });
 
 app.get('/projects-list', (req, res) => {
-    res.sendFile(path.join(__dirname, 'projects-list.html'));
+    sendNoncedHtml(res, path.join(__dirname, 'projects-list.html'));
 });
 
 // Sitemap.xml
 app.get('/sitemap.xml', (req, res) => {
     const { db } = require('./database/db');
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const proto = process.env.NODE_ENV === 'production' ? 'https' : req.protocol;
+    const baseUrl = `${proto}://${req.get('host')}`;
     
     db.all(`SELECT id, created_at FROM blog WHERE hidden = 0 AND published = 1 ORDER BY created_at DESC`, [], (err, posts) => {
         const blogUrls = (posts || []).map(p => {
@@ -297,31 +439,15 @@ ${blogUrls}
     });
 });
 
-// Serve 404 page for unknown routes
-app.get('*', (req, res) => {
-    res.status(404).sendFile(path.join(__dirname, '404.html'));
-});
-
-// Error handling
-app.use((err, req, res, next) => {
-    if (err instanceof multer.MulterError) {
-        return res.status(400).json({ error: `Upload error: ${err.message}` });
-    }
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// Fallback for missing uploaded images
+// Fallback for missing uploaded images — must be before the wildcard GET* route
 app.use('/uploads/:filename', (req, res, next) => {
     const filename = req.params.filename;
     const filePath = path.join(__dirname, 'uploads', filename);
     
-    // If file exists, serve it
     if (fs.existsSync(filePath)) {
         return next();
     }
     
-    // If file doesn't exist, serve placeholder
     const placeholderPath = path.join(__dirname, 'assets', 'projects', 'placeholder.svg');
     if (fs.existsSync(placeholderPath)) {
         res.sendFile(placeholderPath);
@@ -330,8 +456,56 @@ app.use('/uploads/:filename', (req, res, next) => {
     }
 });
 
-// Startup checks
-const startServer = () => {
+// Serve 404 page for unknown routes
+app.get('*', (req, res) => {
+    res.status(404);
+    sendNoncedHtml(res, path.join(__dirname, '404.html'));
+});
+
+// Error handling — JSON for API routes, user-friendly HTML for browser requests
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: `Upload error: ${err.message}` });
+    }
+    console.error(err.stack);
+    const isApiRequest = req.path.startsWith('/api/');
+    if (isApiRequest) {
+        return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    }
+    res.status(500).send(`<!DOCTYPE html><html><head><title>Server Error</title>
+        <style>body{font-family:sans-serif;background:#0a0a0f;color:#e5e7eb;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+        .box{text-align:center;padding:40px;} h1{color:#ef4444;font-size:2rem;} p{color:#9ca3af;} a{color:#00d4aa;}</style></head>
+        <body><div class="box"><h1>500 — Server Error</h1><p>Something went wrong on our end. Please try again later.</p>
+        <a href="/">← Back to home</a></div></body></html>`);
+});
+
+// SQLite daily backup — copies portfolio.db to database/backups/ keeping last 7
+function runDailyBackup() {
+    const backupDir = path.join(__dirname, 'database', 'backups');
+    if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+
+    const src = path.join(__dirname, 'database', 'portfolio.db');
+    const date = new Date().toISOString().slice(0, 10);
+    const dest = path.join(backupDir, `portfolio-${date}.db`);
+
+    fs.copyFile(src, dest, (err) => {
+        if (err) { console.error('Backup failed:', err.message); return; }
+        console.log(`Database backed up to ${dest}`);
+
+        // Prune: keep only the 7 most recent backups
+        const files = fs.readdirSync(backupDir)
+            .filter(f => f.startsWith('portfolio-') && f.endsWith('.db'))
+            .sort();
+        if (files.length > 7) {
+            files.slice(0, files.length - 7).forEach(f => {
+                fs.unlink(path.join(backupDir, f), () => {});
+            });
+        }
+    });
+}
+
+// Startup — awaits DB and credentials before accepting any requests
+const startServer = async () => {
     if (process.env.NODE_ENV === 'production') {
         if (!process.env.SESSION_SECRET) {
             console.error('FATAL: SESSION_SECRET must be set in production');
@@ -343,13 +517,28 @@ const startServer = () => {
         }
     }
 
-    app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-        console.log(`Admin panel: http://localhost:${PORT}/admin`);
-        if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-            console.warn('\u26a0\ufe0f  Email notifications disabled (GMAIL_USER / GMAIL_APP_PASSWORD not set)');
-        }
-    });
+    try {
+        // 1) Init DB schema and migrations (fully awaited)
+        await initialize();
+
+        // 2) Init admin credentials (fully awaited — no race condition)
+        await authRouter.initializeCredentials();
+
+        // 3) Only now start accepting requests
+        app.listen(PORT, () => {
+            console.log(`Server running on http://localhost:${PORT}`);
+            console.log(`Admin panel: http://localhost:${PORT}${ADMIN_PATH}`);
+            if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+                console.warn('\u26a0\ufe0f  Email notifications disabled (GMAIL_USER / GMAIL_APP_PASSWORD not set)');
+            }
+            // Run backup immediately on start, then every 24 hours
+            runDailyBackup();
+            setInterval(runDailyBackup, 24 * 60 * 60 * 1000);
+        });
+    } catch (err) {
+        console.error('FATAL: Server failed to start:', err);
+        process.exit(1);
+    }
 };
 
 startServer();

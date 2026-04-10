@@ -5,12 +5,14 @@
 
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 
 # Database
 database/*.db
 database/*.db-journal
+database/*.db-wal
+database/*.db-shm
+database/backups/
 
 # Uploads
 uploads/*

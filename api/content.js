@@ -1,8 +1,20 @@
 const express = require('express');
 const validator = require('validator');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
+const path = require('path');
 const { db } = require('../database/db');
+const { encrypt } = require('./crypto-utils');
 const router = express.Router();
+
+// Delete a local upload file safely (only files inside /uploads/)
+function deleteUploadFile(fileUrl) {
+    if (!fileUrl || !fileUrl.startsWith('/uploads/')) return;
+    const filePath = path.join(__dirname, '..', fileUrl);
+    fs.unlink(filePath, (err) => {
+        if (err && err.code !== 'ENOENT') console.error('Failed to delete upload:', filePath, err.message);
+    });
+}
 
 // Input validation helper
 const validateInput = (data, fields) => {
@@ -46,10 +58,10 @@ const requireAuth = (req, res, next) => {
 const createCRUDRoutes = (tableName) => {
     // Allowed columns per table (whitelist to prevent SQL injection via column names)
     const allowedColumns = {
-        experience: ['company', 'role', 'period', 'description', 'badge', 'order_num', 'hidden'],
-        education: ['institution', 'degree', 'period', 'description', 'badge', 'order_num', 'hidden'],
+        experience: ['company', 'role', 'period', 'location', 'description', 'badge', 'order_num', 'hidden'],
+        education: ['institution', 'degree', 'period', 'location', 'description', 'badge', 'order_num', 'hidden'],
         projects: ['title', 'description', 'tags', 'image_url', 'project_url', 'github_url', 'featured', 'order_num', 'hidden'],
-        blog: ['title', 'content', 'excerpt', 'tags', 'image_url', 'read_time', 'featured', 'published', 'order_num', 'hidden'],
+        blog: ['title', 'content', 'excerpt', 'tags', 'image_url', 'read_time', 'featured', 'published', 'order_num', 'hidden', 'author'],
         skills: ['category', 'skills', 'hidden']
     };
 
@@ -59,6 +71,7 @@ const createCRUDRoutes = (tableName) => {
             company: { type: 'string', required: true, maxLength: 100, label: 'Company' },
             role: { type: 'string', required: true, maxLength: 100, label: 'Role' },
             period: { type: 'string', required: true, maxLength: 50, label: 'Period' },
+            location: { type: 'string', maxLength: 100 },
             description: { type: 'string', maxLength: 2000 },
             badge: { type: 'string', maxLength: 20 }
         },
@@ -66,6 +79,7 @@ const createCRUDRoutes = (tableName) => {
             institution: { type: 'string', required: true, maxLength: 100 },
             degree: { type: 'string', required: true, maxLength: 100 },
             period: { type: 'string', required: true, maxLength: 50 },
+            location: { type: 'string', maxLength: 100 },
             description: { type: 'string', maxLength: 2000 },
             badge: { type: 'string', maxLength: 20 }
         },
@@ -84,6 +98,7 @@ const createCRUDRoutes = (tableName) => {
             excerpt: { type: 'string', maxLength: 500 },
             tags: { type: 'array' },
             image_url: { type: 'string', maxLength: 500 },
+            author: { type: 'string', maxLength: 100 },
             read_time: { type: 'number' },
             featured: { type: 'number' },
             published: { type: 'number' }
@@ -106,7 +121,7 @@ const createCRUDRoutes = (tableName) => {
         db.all(query, [], (err, rows) => {
             if (err) {
                 console.error(`Error fetching ${tableName}:`, err);
-                return res.status(500).json({ error: err.message });
+                return res.status(500).json({ error: 'Internal server error' });
             }
             // Parse JSON fields based on table
             try {
@@ -133,7 +148,7 @@ const createCRUDRoutes = (tableName) => {
             db.all(query, [], (err, rows) => {
                 if (err) {
                     console.error(`Error fetching featured ${tableName}:`, err);
-                    return res.status(500).json({ error: err.message });
+                    return res.status(500).json({ error: 'Internal server error' });
                 }
                 
                 // Parse JSON fields
@@ -170,7 +185,7 @@ const createCRUDRoutes = (tableName) => {
             db.all(query, [`%${category}%`], (err, rows) => {
                 if (err) {
                     console.error(`Error fetching ${tableName} by category:`, err);
-                    return res.status(500).json({ error: err.message });
+                    return res.status(500).json({ error: 'Internal server error' });
                 }
                 
                 // Parse JSON fields and filter by exact category match
@@ -199,7 +214,7 @@ const createCRUDRoutes = (tableName) => {
             db.all(query, [], (err, rows) => {
                 if (err) {
                     console.error(`Error fetching ${tableName} categories:`, err);
-                    return res.status(500).json({ error: err.message });
+                    return res.status(500).json({ error: 'Internal server error' });
                 }
                 
                 const allTags = [];
@@ -245,7 +260,7 @@ const createCRUDRoutes = (tableName) => {
             db.all(query, [`%${category}%`], (err, rows) => {
                 if (err) {
                     console.error(`Error fetching ${tableName} by category:`, err);
-                    return res.status(500).json({ error: err.message });
+                    return res.status(500).json({ error: 'Internal server error' });
                 }
                 
                 try {
@@ -271,7 +286,7 @@ const createCRUDRoutes = (tableName) => {
             db.all(query, [], (err, rows) => {
                 if (err) {
                     console.error(`Error fetching ${tableName} categories:`, err);
-                    return res.status(500).json({ error: err.message });
+                    return res.status(500).json({ error: 'Internal server error' });
                 }
                 
                 const allTags = [];
@@ -305,7 +320,7 @@ const createCRUDRoutes = (tableName) => {
     // Get single item
     router.get(`/${tableName}/:id`, (req, res) => {
         db.get(`SELECT * FROM ${tableName} WHERE id = ?`, [req.params.id], (err, row) => {
-            if (err) return res.status(500).json({ error: err.message });
+            if (err) { console.error(`Error fetching ${tableName} by id:`, err); return res.status(500).json({ error: 'Internal server error' }); }
             if (!row) return res.status(404).json({ error: 'Not found' });
             try {
                 if (row.tags && typeof row.tags === 'string') row.tags = JSON.parse(row.tags);
@@ -362,7 +377,8 @@ const createCRUDRoutes = (tableName) => {
         
         db.run(query, values, function(err) {
             if (err) {
-                return res.status(500).json({ error: err.message });
+                console.error(`Error creating ${tableName}:`, err);
+                return res.status(500).json({ error: 'Internal server error' });
             }
             res.json({ id, success: true });
         });
@@ -379,6 +395,15 @@ const createCRUDRoutes = (tableName) => {
         }
         
         const data = req.body;
+
+        // If image_url is changing, delete the old file from disk
+        if (data.image_url !== undefined) {
+            db.get(`SELECT image_url FROM ${tableName} WHERE id = ?`, [req.params.id], (fetchErr, oldRow) => {
+                if (!fetchErr && oldRow && oldRow.image_url && oldRow.image_url !== data.image_url) {
+                    deleteUploadFile(oldRow.image_url);
+                }
+            });
+        }
         
         // Auto-remove featured from others if this item is being featured
         const hasFeatured = (tableName === 'projects' || tableName === 'blog') && data.featured === 1;
@@ -408,7 +433,8 @@ const createCRUDRoutes = (tableName) => {
         
         db.run(query, values, function(err) {
             if (err) {
-                return res.status(500).json({ error: err.message });
+                console.error(`Error updating ${tableName}:`, err);
+                return res.status(500).json({ error: 'Internal server error' });
             }
             res.json({ success: true, changes: this.changes });
         });
@@ -416,11 +442,13 @@ const createCRUDRoutes = (tableName) => {
 
     // Delete item (admin only)
     router.delete(`/${tableName}/:id`, requireAuth, (req, res) => {
-        db.run(`DELETE FROM ${tableName} WHERE id = ?`, [req.params.id], function(err) {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-            res.json({ success: true, changes: this.changes });
+        // Fetch image_url before deleting so we can remove the file from disk
+        db.get(`SELECT image_url FROM ${tableName} WHERE id = ?`, [req.params.id], (fetchErr, row) => {
+            db.run(`DELETE FROM ${tableName} WHERE id = ?`, [req.params.id], function(err) {
+                if (err) { console.error(`Error deleting ${tableName}:`, err); return res.status(500).json({ error: 'Internal server error' }); }
+                if (row && row.image_url) deleteUploadFile(row.image_url);
+                res.json({ success: true, changes: this.changes });
+            });
         });
     });
 
@@ -431,7 +459,8 @@ const createCRUDRoutes = (tableName) => {
             [req.params.id],
             function(err) {
                 if (err) {
-                    return res.status(500).json({ error: err.message });
+                    console.error(`Error toggling ${tableName} visibility:`, err);
+                    return res.status(500).json({ error: 'Internal server error' });
                 }
                 res.json({ success: true, changes: this.changes });
             }
@@ -447,8 +476,13 @@ const SENSITIVE_KEYS = ['admin_password_hash', 'admin_username', 'smtp_user', 's
 
 // Settings routes — public (filters out sensitive keys)
 router.get('/settings', (req, res) => {
+    // Cache-busting headers
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    
     db.all('SELECT * FROM settings', [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) { console.error('Error fetching settings:', err); return res.status(500).json({ error: 'Internal server error' }); }
         const settings = {};
         rows.forEach(row => {
             if (!SENSITIVE_KEYS.includes(row.key)) {
@@ -462,7 +496,7 @@ router.get('/settings', (req, res) => {
 // Settings routes — admin only (includes sensitive keys, masks password)
 router.get('/settings/secure', requireAuth, (req, res) => {
     db.all('SELECT * FROM settings', [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
+        if (err) { console.error('Error fetching secure settings:', err); return res.status(500).json({ error: 'Internal server error' }); }
         const settings = {};
         rows.forEach(row => {
             if (row.key === 'admin_password_hash') return;
@@ -476,17 +510,38 @@ router.get('/settings/secure', requireAuth, (req, res) => {
     });
 });
 
+const WRITABLE_SETTINGS_KEYS = [
+    'hero_name', 'hero_tagline', 'hero_roles',
+    'hero_years_experience', 'hero_years_label', 'hero_education_value', 'hero_education_label',
+    'hero_location', 'hero_cv_url',
+    'about_title', 'about_content', 'about_image',
+    'about_paragraph_1', 'about_paragraph_2', 'about_paragraph_3',
+    'about_edu_title', 'about_edu_desc', 'about_edu_sub',
+    'about_exp_title', 'about_exp_desc', 'about_exp_sub',
+    'about_current_title', 'about_current_desc', 'about_current_sub',
+    'social_linkedin', 'social_github', 'social_twitter', 'social_instagram', 'social_youtube', 'social_facebook',
+    'smtp_user', 'smtp_app_password', 'recovery_email'
+];
+
 router.put('/settings/:key', requireAuth, (req, res) => {
-    const { value } = req.body;
+    let { value } = req.body;
     if (req.params.key === 'admin_password_hash') {
         return res.status(403).json({ error: 'Cannot modify password hash directly' });
+    }
+    if (!WRITABLE_SETTINGS_KEYS.includes(req.params.key)) {
+        return res.status(400).json({ error: 'Unknown or non-writable settings key' });
+    }
+    // Encrypt sensitive credentials before storing
+    if (req.params.key === 'smtp_app_password' && value) {
+        value = encrypt(value);
     }
     db.run(
         'INSERT INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value = ?, updated_at = CURRENT_TIMESTAMP',
         [req.params.key, value, value],
         function(err) {
             if (err) {
-                return res.status(500).json({ error: err.message });
+                console.error('Error updating setting:', err);
+                return res.status(500).json({ error: 'Internal server error' });
             }
             res.json({ success: true });
         }
