@@ -138,10 +138,13 @@ const apiLimiter = rateLimit({
     skip: (req) => req.method === 'GET' // Skip GET requests only
 });
 
+// Upload directory — use UPLOAD_PATH env var for persistent disk (e.g. Render), fallback to local ./uploads
+const UPLOAD_DIR = process.env.UPLOAD_PATH || path.join(__dirname, 'uploads');
+
 // File upload configuration
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, 'uploads');
+        const uploadPath = UPLOAD_DIR;
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
         }
@@ -299,7 +302,7 @@ app.use('/uploads', (req, res, next) => {
         return res.status(403).send('Direct access to documents is not allowed');
     }
     next();
-}, express.static(path.join(__dirname, 'uploads'), {
+}, express.static(UPLOAD_DIR, {
     maxAge: '1d', // Cache for 1 day
     setHeaders: (res, filePath) => {
         // Add fallback for missing images
@@ -322,9 +325,9 @@ app.get('/download/cv', (req, res) => {
         }
         const cvUrl = row.value;
         // cvUrl is a relative path like /uploads/filename.pdf
-        const cvPath = path.resolve(__dirname, cvUrl.replace(/^\//, ''));
+        const cvPath = path.resolve(UPLOAD_DIR, path.basename(cvUrl));
         // Prevent directory traversal — resolved path must stay inside the uploads folder
-        const uploadsDir = path.resolve(__dirname, 'uploads');
+        const uploadsDir = path.resolve(UPLOAD_DIR);
         if (!cvPath.startsWith(uploadsDir + path.sep) && cvPath !== uploadsDir) {
             return res.status(403).send('Invalid CV path');
         }
@@ -442,7 +445,7 @@ ${blogUrls}
 // Fallback for missing uploaded images — must be before the wildcard GET* route
 app.use('/uploads/:filename', (req, res, next) => {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, 'uploads', filename);
+    const filePath = path.join(UPLOAD_DIR, filename);
     
     if (fs.existsSync(filePath)) {
         return next();

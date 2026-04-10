@@ -2,8 +2,8 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-// Ensure database directory exists
-const dbDir = path.join(__dirname, '..', 'database');
+// Use DB_PATH env var for persistent disk (e.g. Render), fallback to local ./database
+const dbDir = process.env.DB_PATH || path.join(__dirname, '..', 'database');
 if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
 }
