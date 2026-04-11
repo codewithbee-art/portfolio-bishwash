@@ -12,7 +12,8 @@ database/*.db
 database/*.db-journal
 database/*.db-wal
 database/*.db-shm
-database/backups/
+# Don't ignore backups on persistent disk (they're needed for recovery)
+# database/backups/
 
 # Uploads
 uploads/*

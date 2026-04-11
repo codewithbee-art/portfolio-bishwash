@@ -484,10 +484,12 @@ app.use((err, req, res, next) => {
 
 // SQLite daily backup — copies portfolio.db to database/backups/ keeping last 7
 function runDailyBackup() {
-    const backupDir = path.join(__dirname, 'database', 'backups');
+    // Use same DB_PATH logic as db.js
+    const dbDir = process.env.DB_PATH || path.join(__dirname, 'database');
+    const backupDir = path.join(dbDir, 'backups');
     if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
 
-    const src = path.join(__dirname, 'database', 'portfolio.db');
+    const src = path.join(dbDir, 'portfolio.db');
     const date = new Date().toISOString().slice(0, 10);
     const dest = path.join(backupDir, `portfolio-${date}.db`);
 
