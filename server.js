@@ -416,6 +416,10 @@ app.get('/projects-list', (req, res) => {
     sendNoncedHtml(res, path.join(__dirname, 'projects-list.html'));
 });
 
+app.get('/project/:id', (req, res) => {
+    sendNoncedHtml(res, path.join(__dirname, 'project-detail.html'));
+});
+
 // Sitemap.xml
 app.get('/sitemap.xml', (req, res) => {
     const { db } = require('./database/db');
@@ -428,17 +432,25 @@ app.get('/sitemap.xml', (req, res) => {
             return `  <url><loc>${baseUrl}/blog/${p.id}</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>`;
         }).join('\n');
 
-        const today = new Date().toISOString().split('T')[0];
-        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+        db.all(`SELECT id, created_at FROM projects WHERE hidden = 0 ORDER BY created_at DESC`, [], (err2, projects) => {
+            const projectUrls = (projects || []).map(p => {
+                const lastmod = new Date(p.created_at).toISOString().split('T')[0];
+                return `  <url><loc>${baseUrl}/project/${p.id}</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`;
+            }).join('\n');
+
+            const today = new Date().toISOString().split('T')[0];
+            const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>${baseUrl}/</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
   <url><loc>${baseUrl}/projects-list</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
   <url><loc>${baseUrl}/blogs</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>
+${projectUrls}
 ${blogUrls}
 </urlset>`;
 
-        res.set('Content-Type', 'application/xml');
-        res.send(xml);
+            res.set('Content-Type', 'application/xml');
+            res.send(xml);
+        });
     });
 });
 

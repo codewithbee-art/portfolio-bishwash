@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <title>Project | Bishwash Acharya</title>
+    <meta name="description" content="View project details by Bishwash Acharya — web development, data analytics, and more." id="meta-description">
+    
+    <!-- Open Graph (dynamically updated by JS) -->
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Project | Bishwash Acharya" id="og-title">
+    <meta property="og:description" content="View project details by Bishwash Acharya." id="og-description">
+    <meta property="og:url" content="" id="og-url">
+    <meta property="og:image" content="/assets/profile.png" id="og-image">
+    
+    <!-- Twitter Card (dynamically updated by JS) -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Project | Bishwash Acharya" id="tw-title">
+    <meta name="twitter:description" content="View project details by Bishwash Acharya." id="tw-description">
+    <meta name="twitter:image" content="/assets/profile.png" id="tw-image">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+    
+    <style>
+        .project-detail-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px 24px 60px;
+        }
+        
+        .project-detail-header {
+            margin-bottom: 32px;
+        }
+        
+        .project-detail-title {
+            font-size: 40px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+        
+        .project-detail-meta {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .project-detail-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .project-detail-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .project-detail-tag {
+            background: rgba(0, 212, 170, 0.1);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .project-detail-links {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        
+        .project-detail-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .project-detail-link.primary {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+        
+        .project-detail-link.primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+        }
+        
+        .project-detail-link.secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .project-detail-link.secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .project-detail-image {
+            width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 40px;
+            background: var(--bg-card);
+        }
+        
+        .project-detail-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .project-detail-content {
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+        
+        .project-detail-content p {
+            margin-bottom: 16px;
+        }
+        
+        .project-detail-footer {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .project-detail-footer-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .project-detail-footer-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        /* Related Projects */
+        .related-projects {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        .related-projects h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .related-projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .related-project-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .related-project-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 212, 170, 0.1);
+        }
+
+        .related-project-image {
+            height: 140px;
+            background: var(--bg-dark);
+            overflow: hidden;
+        }
+
+        .related-project-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .related-project-content {
+            padding: 16px;
+        }
+
+        .related-project-content h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.4;
+            color: var(--text-primary);
+        }
+
+        .related-project-content .project-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            gap: 12px;
+        }
+        
+        .project-loading,
+        .project-error {
+            text-align: center;
+            padding: 60px 24px;
+            color: var(--text-secondary);
+        }
+
+        /* Share Bar */
+        .share-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .share-bar-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-right: 4px;
+            flex-shrink: 0;
+        }
+
+        .share-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+        }
+
+        .share-btn svg { transition: transform 0.25s ease; }
+        .share-btn:hover { transform: translateY(-3px); color: #fff; }
+        .share-btn:hover svg { transform: scale(1.2); }
+        .share-btn:active { transform: translateY(-1px); }
+
+        .share-btn.twitter:hover  { background: #000;    border-color: #333;    box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+        .share-btn.linkedin:hover { background: #0077b5; border-color: #0077b5; box-shadow: 0 6px 16px rgba(0,119,181,0.4); }
+        .share-btn.facebook:hover { background: #1877f2; border-color: #1877f2; box-shadow: 0 6px 16px rgba(24,119,242,0.4); }
+        .share-btn.whatsapp:hover { background: #25d366; border-color: #25d366; box-shadow: 0 6px 16px rgba(37,211,102,0.4); }
+        .share-btn.copy:hover     { background: var(--accent); border-color: var(--accent); color: var(--bg-dark); box-shadow: 0 6px 16px rgba(0,212,170,0.4); }
+        .share-btn.copy.copied    { background: var(--accent); border-color: var(--accent); color: var(--bg-dark); box-shadow: 0 6px 16px rgba(0,212,170,0.4); transform: translateY(-3px); }
+
+        @media (max-width: 768px) {
+            .project-detail-container {
+                padding: 100px 16px 40px;
+            }
+            
+            .project-detail-title {
+                font-size: 28px;
+            }
+            
+            .project-detail-meta {
+                gap: 16px;
+            }
+
+            .related-projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .project-detail-footer {
+                flex-wrap: wrap;
+            }
+
+            .project-detail-footer-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Scroll Progress Bar -->
+    <div class="scroll-progress"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="/" class="logo-link"><span class="logo-circle">BA</span></a>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="/#home" class="nav-link">Home</a>
+                <a href="/#about" class="nav-link">About</a>
+                <a href="/#experience" class="nav-link">Experience</a>
+                <a href="/projects" class="nav-link active">Projects</a>
+                <a href="/blogs" class="nav-link">Blog</a>
+                <a href="/#contact" class="nav-link">Contact</a>
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                    <i data-lucide="sun" class="theme-icon sun"></i>
+                    <i data-lucide="moon" class="theme-icon moon"></i>
+                </button>
+                <a href="/admin" class="admin-link" aria-label="Admin Login">
+                    <i data-lucide="lock" class="admin-icon"></i>
+                </a>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="/">Home</a>
+        <span class="separator">›</span>
+        <a href="/projects-list">Projects</a>
+        <span class="separator">›</span>
+        <span class="current" id="breadcrumb-title">Project</span>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="project-detail-container">
+            <div id="project-content">
+                <div class="project-loading">Loading project...</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>Designed & Built ❤️ Bishwash Acharya</p>
+                    <span class="footer-year">2025</span>
+                </div>
+                <div class="footer-right">
+                    <div class="currently-listening">
+                        <svg class="spotify-logo" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#1DB954"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                        <span class="listening-label">Currently listening to:</span>
+                        <span class="listening-track">Lo-fi beats</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/main.js" data-no-auto-init></script>
+    <script>
+        function getProjectIdFromPath() {
+            const pathParts = window.location.pathname.split('/');
+            return pathParts[pathParts.length - 1];
+        }
+
+        async function loadProject() {
+            const projectId = getProjectIdFromPath();
+            const container = document.getElementById('project-content');
+            
+            if (!projectId || !container) {
+                container.innerHTML = '<div class="project-error"><p>Project not found.</p></div>';
+                return;
+            }
+            
+            try {
+                const res = await fetch(`/api/content/projects/${projectId}`);
+                
+                if (!res.ok) {
+                    container.innerHTML = '<div class="project-error"><p>Project not found.</p></div>';
+                    return;
+                }
+                
+                const project = await res.json();
+                
+                // Update page title and meta
+                document.title = `${project.title} - Bishwash Acharya`;
+                document.getElementById('meta-description').setAttribute('content', project.description || '');
+                document.getElementById('og-title').setAttribute('content', `${project.title} - Bishwash Acharya`);
+                document.getElementById('og-description').setAttribute('content', project.description || '');
+                document.getElementById('og-url').setAttribute('content', window.location.href);
+                if (project.image_url) document.getElementById('og-image').setAttribute('content', project.image_url);
+                document.getElementById('tw-title').setAttribute('content', `${project.title} - Bishwash Acharya`);
+                document.getElementById('tw-description').setAttribute('content', project.description || '');
+                if (project.image_url) document.getElementById('tw-image').setAttribute('content', project.image_url);
+                const breadcrumbTitle = document.getElementById('breadcrumb-title');
+                if (breadcrumbTitle) breadcrumbTitle.textContent = project.title;
+                
+                const publishDate = new Date(project.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                // Header
+                const header = document.createElement('div');
+                header.className = 'project-detail-header';
+                
+                const title = document.createElement('h1');
+                title.className = 'project-detail-title';
+                title.textContent = project.title;
+                header.appendChild(title);
+                
+                // Meta
+                const meta = document.createElement('div');
+                meta.className = 'project-detail-meta';
+                
+                const dateItem = document.createElement('div');
+                dateItem.className = 'project-detail-meta-item';
+                const dateIcon = document.createElement('i');
+                dateIcon.setAttribute('data-lucide', 'calendar');
+                dateIcon.setAttribute('width', '16');
+                dateIcon.setAttribute('height', '16');
+                dateItem.appendChild(dateIcon);
+                const dateSpan = document.createElement('span');
+                dateSpan.textContent = publishDate;
+                dateItem.appendChild(dateSpan);
+                meta.appendChild(dateItem);
+                
+                if (project.featured) {
+                    const featItem = document.createElement('div');
+                    featItem.className = 'project-detail-meta-item';
+                    const featIcon = document.createElement('i');
+                    featIcon.setAttribute('data-lucide', 'star');
+                    featIcon.setAttribute('width', '16');
+                    featIcon.setAttribute('height', '16');
+                    featItem.appendChild(featIcon);
+                    const featSpan = document.createElement('span');
+                    featSpan.textContent = 'Featured Project';
+                    featItem.appendChild(featSpan);
+                    meta.appendChild(featItem);
+                }
+                
+                header.appendChild(meta);
+                
+                // Tags
+                if (project.tags && project.tags.length > 0) {
+                    const tagsDiv = document.createElement('div');
+                    tagsDiv.className = 'project-detail-tags';
+                    project.tags.forEach(tag => {
+                        const tagSpan = document.createElement('span');
+                        tagSpan.className = 'project-detail-tag';
+                        tagSpan.textContent = tag;
+                        tagsDiv.appendChild(tagSpan);
+                    });
+                    header.appendChild(tagsDiv);
+                }
+                
+                // Links (Live Demo / GitHub)
+                if (project.project_url || project.github_url) {
+                    const linksDiv = document.createElement('div');
+                    linksDiv.className = 'project-detail-links';
+                    
+                    if (project.project_url) {
+                        const liveLink = document.createElement('a');
+                        liveLink.href = project.project_url;
+                        liveLink.className = 'project-detail-link primary';
+                        liveLink.target = '_blank';
+                        liveLink.rel = 'noopener noreferrer';
+                        const liveIcon = document.createElement('i');
+                        liveIcon.setAttribute('data-lucide', 'external-link');
+                        liveIcon.setAttribute('width', '16');
+                        liveIcon.setAttribute('height', '16');
+                        liveLink.appendChild(liveIcon);
+                        liveLink.appendChild(document.createTextNode('Live Demo'));
+                        linksDiv.appendChild(liveLink);
+                    }
+                    
+                    if (project.github_url) {
+                        const ghLink = document.createElement('a');
+                        ghLink.href = project.github_url;
+                        ghLink.className = 'project-detail-link secondary';
+                        ghLink.target = '_blank';
+                        ghLink.rel = 'noopener noreferrer';
+                        const ghIcon = document.createElement('i');
+                        ghIcon.setAttribute('data-lucide', 'github');
+                        ghIcon.setAttribute('width', '16');
+                        ghIcon.setAttribute('height', '16');
+                        ghLink.appendChild(ghIcon);
+                        ghLink.appendChild(document.createTextNode('View on GitHub'));
+                        linksDiv.appendChild(ghLink);
+                    }
+                    
+                    header.appendChild(linksDiv);
+                }
+
+                // Share bar
+                const shareBar = document.createElement('div');
+                shareBar.className = 'share-bar';
+                const shareLabel = document.createElement('span');
+                shareLabel.className = 'share-bar-label';
+                shareLabel.textContent = 'Share';
+                shareBar.appendChild(shareLabel);
+
+                const postUrl = encodeURIComponent(window.location.href);
+                const postTitle = encodeURIComponent(project.title + ' — Bishwash Acharya');
+
+                const shareLinks = [
+                    { cls: 'twitter', label: 'Twitter / X', href: `https://twitter.com/intent/tweet?url=${postUrl}&text=${postTitle}`, icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>' },
+                    { cls: 'linkedin', label: 'LinkedIn', href: `https://www.linkedin.com/sharing/share-offsite/?url=${postUrl}`, icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>' },
+                    { cls: 'facebook', label: 'Facebook', href: `https://www.facebook.com/sharer/sharer.php?u=${postUrl}`, icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>' },
+                    { cls: 'whatsapp', label: 'WhatsApp', href: `https://wa.me/?text=${postTitle}%20${postUrl}`, icon: '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>' }
+                ];
+
+                shareLinks.forEach(({ cls, label, href, icon }) => {
+                    const btn = document.createElement('a');
+                    btn.className = `share-btn ${cls}`;
+                    btn.href = href;
+                    btn.target = '_blank';
+                    btn.rel = 'noopener noreferrer';
+                    btn.setAttribute('title', label);
+                    btn.innerHTML = icon;
+                    shareBar.appendChild(btn);
+                });
+
+                // Copy link button
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'share-btn copy';
+                const iconCopy = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                const iconCheck = '<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                copyBtn.innerHTML = iconCopy;
+                copyBtn.setAttribute('title', 'Copy link');
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        copyBtn.innerHTML = iconCheck;
+                        copyBtn.classList.add('copied');
+                        setTimeout(() => { copyBtn.innerHTML = iconCopy; copyBtn.classList.remove('copied'); }, 2000);
+                    });
+                });
+                shareBar.appendChild(copyBtn);
+                
+                // Description content
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'project-detail-content';
+                const descP = document.createElement('p');
+                descP.textContent = project.description || 'No description available.';
+                contentDiv.appendChild(descP);
+                
+                // Footer
+                const footer = document.createElement('div');
+                footer.className = 'project-detail-footer';
+                const footerBtn = document.createElement('a');
+                footerBtn.href = '/projects-list';
+                footerBtn.className = 'project-detail-footer-btn';
+                const footerIcon = document.createElement('i');
+                footerIcon.setAttribute('data-lucide', 'arrow-left');
+                footerIcon.setAttribute('width', '16');
+                footerIcon.setAttribute('height', '16');
+                footerBtn.appendChild(footerIcon);
+                footerBtn.appendChild(document.createTextNode('All Projects'));
+                footer.appendChild(footerBtn);
+                footer.appendChild(shareBar);
+                
+                // Assemble page
+                container.innerHTML = '';
+                container.appendChild(header);
+                
+                if (project.image_url) {
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'project-detail-image';
+                    const img = document.createElement('img');
+                    img.src = project.image_url;
+                    img.alt = project.title;
+                    img.onerror = () => { img.src = '/assets/projects/placeholder.jpg'; };
+                    imgDiv.appendChild(img);
+                    container.appendChild(imgDiv);
+                }
+                
+                container.appendChild(contentDiv);
+                container.appendChild(footer);
+                
+                lucide.createIcons();
+
+                // Load related projects
+                loadRelatedProjects(project);
+                
+            } catch (err) {
+                console.error('Error loading project:', err);
+                container.innerHTML = '<div class="project-error"><p>Error loading project. Please try again later.</p></div>';
+            }
+        }
+
+        // Load related projects based on shared tags
+        async function loadRelatedProjects(currentProject) {
+            try {
+                const res = await fetch('/api/content/projects');
+                const allProjects = await res.json();
+
+                const otherProjects = allProjects.filter(p => !p.hidden && p.id !== currentProject.id);
+                if (otherProjects.length === 0) return;
+
+                const currentTags = currentProject.tags || [];
+                let displayProjects = [];
+                let sectionTitle = 'More Projects';
+
+                if (currentTags.length > 0) {
+                    const scored = otherProjects.map(project => {
+                        const projectTags = project.tags || [];
+                        const sharedCount = currentTags.filter(t => projectTags.includes(t)).length;
+                        return { project, sharedCount };
+                    }).filter(s => s.sharedCount > 0)
+                      .sort((a, b) => b.sharedCount - a.sharedCount)
+                      .slice(0, 3);
+
+                    displayProjects = scored.map(s => s.project);
+                    if (displayProjects.length > 0) sectionTitle = 'Related Projects';
+                }
+
+                if (displayProjects.length === 0) {
+                    displayProjects = otherProjects
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                        .slice(0, 3);
+                }
+
+                if (displayProjects.length === 0) return;
+
+                const section = document.createElement('div');
+                section.className = 'related-projects';
+
+                const heading = document.createElement('h2');
+                heading.textContent = sectionTitle;
+                section.appendChild(heading);
+
+                const grid = document.createElement('div');
+                grid.className = 'related-projects-grid';
+
+                displayProjects.forEach(project => {
+                    const card = document.createElement('div');
+                    card.className = 'related-project-card';
+                    card.onclick = () => window.location.href = `/project/${project.id}`;
+
+                    const imgDiv = document.createElement('div');
+                    imgDiv.className = 'related-project-image';
+                    if (project.image_url) {
+                        const img = document.createElement('img');
+                        img.src = project.image_url;
+                        img.alt = project.title;
+                        img.onerror = function() { this.src = '/assets/projects/placeholder.jpg'; };
+                        imgDiv.appendChild(img);
+                    }
+                    card.appendChild(imgDiv);
+
+                    const content = document.createElement('div');
+                    content.className = 'related-project-content';
+                    const title = document.createElement('h4');
+                    title.textContent = project.title;
+                    content.appendChild(title);
+
+                    const meta = document.createElement('div');
+                    meta.className = 'project-meta';
+                    const dateSpan = document.createElement('span');
+                    dateSpan.textContent = new Date(project.created_at).toLocaleDateString();
+                    meta.appendChild(dateSpan);
+                    content.appendChild(meta);
+
+                    card.appendChild(content);
+                    grid.appendChild(card);
+                });
+
+                section.appendChild(grid);
+                document.getElementById('project-content').appendChild(section);
+                
+            } catch (err) {
+                console.error('Error loading related projects:', err);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            const app = new PortfolioApp();
+            loadProject();
+        });
+    </script>
+</body>
+</html>

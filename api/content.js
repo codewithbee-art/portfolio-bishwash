@@ -110,10 +110,19 @@ const createCRUDRoutes = (tableName) => {
     
     // Get all items (public - respects hidden)
     router.get(`/${tableName}`, (req, res) => {
+        // Cache-busting headers
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        
         const showHidden = req.session.isAdmin;
         // Some tables have order_num, others don't
         const hasOrderNum = ['experience', 'education', 'projects', 'blog'].includes(tableName);
-        const orderBy = hasOrderNum ? 'ORDER BY order_num, created_at' : 'ORDER BY created_at';
+        // For projects & blog: newest first (LIFO), then manual order within same date
+        // For other tables: keep existing order
+        const orderBy = (tableName === 'projects' || tableName === 'blog')
+            ? 'ORDER BY created_at DESC, order_num' 
+            : (hasOrderNum ? 'ORDER BY order_num, created_at' : 'ORDER BY created_at');
         const query = showHidden 
             ? `SELECT * FROM ${tableName} ${orderBy}`
             : `SELECT * FROM ${tableName} WHERE hidden = 0 ${orderBy}`;
@@ -316,6 +325,22 @@ const createCRUDRoutes = (tableName) => {
             });
         });
     }
+
+    // Bulk reorder items (admin only)
+    router.put(`/${tableName}/reorder`, requireAuth, (req, res) => {
+        const { items } = req.body;
+        if (!Array.isArray(items)) return res.status(400).json({ error: 'items array required' });
+        
+        const stmt = db.prepare(`UPDATE ${tableName} SET order_num = ? WHERE id = ?`);
+        let errors = 0;
+        items.forEach(({ id, order_num }) => {
+            stmt.run(order_num, id, (err) => { if (err) errors++; });
+        });
+        stmt.finalize((err) => {
+            if (err || errors > 0) return res.status(500).json({ error: 'Some updates failed' });
+            res.json({ success: true });
+        });
+    });
 
     // Get single item
     router.get(`/${tableName}/:id`, (req, res) => {

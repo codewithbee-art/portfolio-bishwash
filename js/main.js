@@ -1039,7 +1039,7 @@ class PortfolioApp {
 
             await this.delay(50);
 
-            const proj = await fetch('/api/content/projects').then(r => r.json()).catch(() => []);
+            const proj = await fetch('/api/content/projects?t=' + Date.now()).then(r => r.json()).catch(() => []);
 
             await this.delay(50);
 
@@ -1343,17 +1343,53 @@ class PortfolioApp {
 
                 
 
+                const titleLink = document.createElement('a');
+
+                titleLink.href = `/project/${project.id}`;
+
+                titleLink.style.textDecoration = 'none';
+
+                titleLink.style.color = 'inherit';
+
                 const title = document.createElement('h3');
 
                 title.textContent = project.title;
 
-                contentDiv.appendChild(title);
+                titleLink.appendChild(title);
+
+                contentDiv.appendChild(titleLink);
 
                 
 
                 const description = document.createElement('p');
 
-                description.textContent = project.description || '';
+                const maxLen = 150;
+
+                const fullDesc = project.description || '';
+
+                if (fullDesc.length > maxLen) {
+
+                    description.textContent = fullDesc.substring(0, maxLen) + '...';
+
+                    const readMore = document.createElement('a');
+
+                    readMore.href = `/project/${project.id}`;
+
+                    readMore.textContent = ' Read more';
+
+                    readMore.style.color = 'var(--accent)';
+
+                    readMore.style.fontWeight = '500';
+
+                    readMore.style.textDecoration = 'none';
+
+                    description.appendChild(readMore);
+
+                } else {
+
+                    description.textContent = fullDesc;
+
+                }
 
                 contentDiv.appendChild(description);
 
@@ -1457,17 +1493,53 @@ class PortfolioApp {
 
                 
 
+                const titleLink = document.createElement('a');
+
+                titleLink.href = `/project/${project.id}`;
+
+                titleLink.style.textDecoration = 'none';
+
+                titleLink.style.color = 'inherit';
+
                 const title = document.createElement('h3');
 
                 title.textContent = project.title;
 
-                contentDiv.appendChild(title);
+                titleLink.appendChild(title);
+
+                contentDiv.appendChild(titleLink);
 
                 
 
                 const description = document.createElement('p');
 
-                description.textContent = project.description || '';
+                const maxLen = 100;
+
+                const fullDesc = project.description || '';
+
+                if (fullDesc.length > maxLen) {
+
+                    description.textContent = fullDesc.substring(0, maxLen) + '...';
+
+                    const readMore = document.createElement('a');
+
+                    readMore.href = `/project/${project.id}`;
+
+                    readMore.textContent = ' Read more';
+
+                    readMore.style.color = 'var(--accent)';
+
+                    readMore.style.fontWeight = '500';
+
+                    readMore.style.textDecoration = 'none';
+
+                    description.appendChild(readMore);
+
+                } else {
+
+                    description.textContent = fullDesc;
+
+                }
 
                 contentDiv.appendChild(description);
 

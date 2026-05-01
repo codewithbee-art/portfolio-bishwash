@@ -665,10 +665,13 @@
                     linksHtml += '</div>';
                 }
 
+                item.style.cursor = 'pointer';
+                item.onclick = (e) => { if (!e.target.closest('a')) window.location.href = `/project/${project.id}`; };
+
                 item.innerHTML = `
                     ${imageHtml}
                     <div class="proj-list-item-content">
-                        <h3>${project.title}</h3>
+                        <h3><a href="/project/${project.id}" style="text-decoration:none;color:inherit;">${project.title}</a></h3>
                         <p class="proj-list-item-desc">${project.description || 'No description available'}</p>
                         <div class="proj-list-item-tags">${tagsHtml}</div>
                         <div class="proj-list-item-meta">
